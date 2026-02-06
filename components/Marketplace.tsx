@@ -1,0 +1,53 @@
+import React from 'react';
+import { Filter, ArrowRight } from 'lucide-react';
+import { ProductCard } from './ProductCard';
+import { PRODUCTS, CATEGORIES } from '../constants';
+
+export const Marketplace: React.FC = () => {
+  const [activeCategory, setActiveCategory] = React.useState("Tất cả");
+
+  return (
+    <section className="py-16 bg-white dark:bg-surface-dark border-t border-slate-100 dark:border-slate-800 transition-colors duration-300">
+      <div className="container mx-auto px-4">
+        <div className="flex flex-col md:flex-row md:items-end justify-between mb-10 gap-6">
+          <div>
+            <h2 className="text-3xl font-display font-bold text-slate-900 dark:text-white">Piano Marketplace</h2>
+            <p className="text-slate-500 dark:text-slate-400 text-sm mt-2">Tìm cây đàn phù hợp với nhu cầu của bạn</p>
+          </div>
+          
+          <div className="flex overflow-x-auto pb-2 md:pb-0 gap-3 no-scrollbar mask-gradient-right">
+            {CATEGORIES.map((cat) => (
+              <button
+                key={cat}
+                onClick={() => setActiveCategory(cat)}
+                className={`px-5 py-2.5 rounded-xl text-sm font-medium whitespace-nowrap transition-all duration-200 ${
+                  activeCategory === cat
+                    ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-md'
+                    : 'bg-slate-100 dark:bg-slate-700/50 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
+                }`}
+              >
+                {cat}
+              </button>
+            ))}
+            <button className="bg-slate-100 dark:bg-slate-700/50 text-slate-600 dark:text-slate-300 px-5 py-2.5 rounded-xl text-sm font-medium whitespace-nowrap hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors flex items-center gap-2">
+              Bộ lọc <Filter className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8">
+          {PRODUCTS.map((product) => (
+            <ProductCard key={product.id} product={product} />
+          ))}
+        </div>
+
+        <div className="mt-16 text-center">
+          <button className="inline-flex items-center gap-2 text-slate-500 dark:text-slate-400 hover:text-primary dark:hover:text-primary font-semibold transition-colors group">
+            Xem tất cả sản phẩm
+            <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+          </button>
+        </div>
+      </div>
+    </section>
+  );
+};
