@@ -1,12 +1,21 @@
 import React from 'react';
-import { Search, Moon, Sun, Menu } from 'lucide-react';
+import { Search, Moon, Sun, Menu, User, LogOut } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
 
 export const Header: React.FC = () => {
   const [isDarkMode, setIsDarkMode] = React.useState(false);
+  const { user, isAuthenticated, logout } = useAuth();
+  const navigate = useNavigate();
 
   const toggleTheme = () => {
     setIsDarkMode(!isDarkMode);
     document.documentElement.classList.toggle('dark');
+  };
+
+  const handleLogout = () => {
+    logout();
+    navigate('/login');
   };
 
   return (
@@ -14,7 +23,7 @@ export const Header: React.FC = () => {
       <div className="container mx-auto px-4 py-3">
         <div className="flex items-center justify-between gap-4">
           {/* Logo */}
-          <a href="#" className="flex items-center gap-2 group">
+          <a href="/" className="flex items-center gap-2 group">
             <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center text-white font-display font-bold text-xl shadow-lg group-hover:scale-105 transition-transform">
               X
             </div>
@@ -42,14 +51,46 @@ export const Header: React.FC = () => {
               />
               <Search className="absolute right-3 top-2.5 w-4 h-4 text-primary cursor-pointer hover:text-cyan-600" />
             </div>
-            
+
             <button className="md:hidden text-slate-600 dark:text-slate-300">
               <Search className="w-6 h-6" />
             </button>
 
-            <button className="bg-primary hover:bg-cyan-800 text-white px-6 py-2 rounded-full text-sm font-semibold shadow-md hover:shadow-lg transition-all transform active:scale-95">
-              Login
-            </button>
+            {/* Auth Buttons */}
+            {isAuthenticated && user ? (
+              <div className="flex items-center gap-3">
+                <div className="hidden md:flex items-center gap-2 px-4 py-2 bg-slate-100 dark:bg-slate-700 rounded-full">
+                  <User className="w-4 h-4 text-primary" />
+                  <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                    {user.full_name}
+                  </span>
+                  {user.role === 'admin' && (
+                    <span className="text-xs bg-primary text-white px-2 py-0.5 rounded-full">
+                      Admin
+                    </span>
+                  )}
+                  {user.role === 'teacher' && (
+                    <span className="text-xs bg-green-500 text-white px-2 py-0.5 rounded-full">
+                      Teacher
+                    </span>
+                  )}
+                </div>
+                <button
+                  onClick={handleLogout}
+                  className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-full text-sm font-semibold shadow-md hover:shadow-lg transition-all transform active:scale-95 flex items-center gap-2"
+                >
+                  <LogOut className="w-4 h-4" />
+                  <span className="hidden sm:inline">Đăng xuất</span>
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={() => navigate('/login')}
+                className="bg-primary hover:bg-cyan-800 text-white px-6 py-2 rounded-full text-sm font-semibold shadow-md hover:shadow-lg transition-all transform active:scale-95"
+              >
+                Login
+              </button>
+            )}
 
             <button
               onClick={toggleTheme}
@@ -57,9 +98,9 @@ export const Header: React.FC = () => {
             >
               {isDarkMode ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
             </button>
-            
+
             <button className="lg:hidden p-2 text-slate-600 dark:text-slate-300">
-                <Menu className="w-6 h-6" />
+              <Menu className="w-6 h-6" />
             </button>
           </div>
         </div>
