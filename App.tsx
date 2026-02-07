@@ -8,6 +8,7 @@ import { Footer } from './components/Footer';
 import { LoginPage } from './pages/LoginPage';
 import { RegisterPage } from './pages/RegisterPage';
 import { ForgotPasswordPage } from './pages/ForgotPasswordPage';
+import { PianoDetailPage } from './pages/PianoDetailPage';
 
 function HomePage() {
   return (
@@ -29,6 +30,7 @@ function App() {
         <div className="min-h-screen flex flex-col font-body">
           <Routes>
             <Route path="/" element={<HomePage />} />
+            <Route path="/piano/:id" element={<PianoDetailPage />} />
             <Route path="/login" element={<LoginPage />} />
             <Route path="/register" element={<RegisterPage />} />
             <Route path="/forgot-password" element={<ForgotPasswordPage />} />

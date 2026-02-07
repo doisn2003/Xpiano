@@ -17,10 +17,14 @@ export const ForgotPasswordPage: React.FC = () => {
 
         try {
             const response = await authService.forgotPassword(email);
-            setSuccess(response.message || 'Link đặt lại mật khẩu đã được gửi đến email của bạn');
-            setEmail('');
+            if (response.success) {
+                setSuccess(response.message);
+                setEmail('');
+            } else {
+                setError(response.message);
+            }
         } catch (err: any) {
-            setError(err.response?.data?.message || 'Không thể gửi email. Vui lòng thử lại.');
+            setError('Không thể gửi email. Vui lòng thử lại.');
         } finally {
             setIsLoading(false);
         }

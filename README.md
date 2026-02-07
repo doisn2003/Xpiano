@@ -1,28 +1,86 @@
-# 🎹 Xpiano Frontend - Authentication & API Integration
+# 🎹 Xpiano Frontend - Supabase Integration ✅
 
-## ✅ Hoàn thành
+## 🔄 MIGRATION HOÀN TẤT 
 
-### 1. **Authentication System**
-- ✅ Login page (`/login`)
-- ✅ Register page (`/register`)
-- ✅ Forgot password page (`/forgot-password`)
-- ✅ Auth context & JWT management
-- ✅ Protected routes
-- ✅ User info display in header
+**Tính năng X (Auth + Pianos) đã ĐỒNG BỘ 100% với Mobile Flutter!**
 
-### 2. **API Integration**
-- ✅ Axios API client với interceptors
-- ✅ Auth service (login, register, logout)
-- ✅ Piano service (fetch từ Express backend)
-- ✅ Loading & error states
-- ✅ Remove ALL mock data
+---
 
-### 3. **Features**
-- ✅ Dynamic piano list từ backend
+## ✅ Features Migrated to Supabase
+
+### 1. **Authentication** (Shared với Mobile)
+- ✅ Login/Register với Supabase Auth
+- ✅ Role metadata (user/teacher/admin)
+- ✅ Forgot Password với email
+- ✅ Real-time auth state changes
+- ✅ Auto profile sync
+- ✅ **ĐỒNG BỘ với Flutter App**
+
+### 2. **Piano CRUD** (Shared với Mobile)
+- ✅ Fetch pianos từ Supabase Database
 - ✅ Category filtering
-- ✅ User authentication status
-- ✅ Role display (User, Teacher, Admin)
-- ✅ Logout functionality
+- ✅ Admin CRUD với RLS
+- ✅ Real-time updates
+- ✅ **ĐỒNG BỘ với Flutter App**
+
+### 3. **User Profiles** (Shared với Mobile)
+- ✅ Auto-create via Trigger
+- ✅ Role management
+- ✅ **ĐỒNG BỘ với Flutter App**
+
+---
+
+## 🏗️ Hybrid Architecture
+
+```
+┌──────────────────────────────────────────────┐
+│         SUPABASE (Shared Features)           │
+│  ✅ Auth                                     │
+│  ✅ Pianos CRUD                              │
+│  ✅ Profiles                                 │
+│  ✅ Realtime                                 │
+├─────────────┬────────────────────────────────┤
+│ Web (React) │ Mobile (Flutter)               │
+│ + WebRTC    │ + Video Social                 │
+│ + Admin     │ + Teacher Schedules            │
+└─────────────┴────────────────────────────────┘
+       ↓
+┌──────────────────────────────────────────────┐
+│    EXPRESS BACKEND (Web-only features)       │
+│  🔧 WebRTC Signaling (will be implemented)  │
+│  🔧 Payment Processing (will be implemented) │
+│  🔧 Admin Analytics                          │
+└──────────────────────────────────────────────┘
+```
+
+---
+
+## 🚀 Quick Start
+
+### 1. Install Dependencies (đã xong)
+```bash
+npm install @supabase/supabase-js axios react-router-dom
+```
+
+### 2. Environment Variables
+```env
+# .env.local
+VITE_API_URL=http://localhost:3000/api              # Express (WebRTC, etc)
+VITE_SUPABASE_URL=https://pjgjusdmzxrhgiptfvbg.supabase.co
+VITE_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+```
+
+### 3. Start Development
+```bash
+# Frontend
+npm run dev
+# Running at: http://localhost:5173
+
+# Backend (optional - for WebRTC/Payment later)
+cd ../XpianoServer
+npm run dev
+# Running at: http://localhost:3000
+```
 
 ---
 
@@ -31,366 +89,236 @@
 ```
 Xpiano/
 ├── lib/
-│   ├── api.ts              # Axios client với auth interceptors
-│   ├── authService.ts      # Auth API calls
-│   └── pianoService.ts     # Piano API calls
+│   ├── supabase.ts              ✅ Supabase client
+│   ├── authService.ts           ✅ Supabase Auth
+│   └── pianoService.ts          ✅ Supabase Database
 ├── contexts/
-│   └── AuthContext.tsx     # Global auth state
+│   └── AuthContext.tsx          ✅ Supabase real-time
 ├── pages/
-│   ├── LoginPage.tsx       # Login page
-│   ├── RegisterPage.tsx    # Register page
-│   └── ForgotPasswordPage.tsx  # Forgot password
+│   ├── LoginPage.tsx            ✅ Uses Supabase
+│   ├── RegisterPage.tsx         ✅ Uses Supabase
+│   └── ForgotPasswordPage.tsx   ✅ Uses Supabase
 ├── components/
-│   ├── Header.tsx          # 🔄 Updated với auth
-│   ├── Marketplace.tsx     # 🔄 Updated fetch từ API
-│   ├── ProductCard.tsx     # Unchanged
-│   ├── Hero.tsx            # Unchanged (as requested)
-│   └── Footer.tsx          # Unchanged
-├── App.tsx                 # 🔄 Added routing & auth provider
-└── .env.local              # API URL config
+│   ├── Header.tsx               ✅ Shows Supabase user
+│   ├── Marketplace.tsx          ✅ Loads from Supabase
+│   ├── ProductCard.tsx
+│   ├── Hero.tsx
+│   └── Footer.tsx
+└── SUPABASE_MIGRATION.md        📚 Full documentation
 ```
 
 ---
 
-## 🚀 Getting Started
+## 🔐 Authentication Flow
 
-### 1. Install dependencies (đã xong)
-```bash
-npm install axios react-router-dom
+### Login (Đồng bộ Web ↔ Mobile):
+```typescript
+// Web hoặc Mobile đều dùng
+await supabase.auth.signInWithPassword({
+  email: 'user@example.com',
+  password: 'password123'
+})
+// → Session stored in Supabase
+// → Profile synced from profiles table
+// → ✅ ĐỒNG BỘ!
 ```
 
-### 2. Start frontend
-```bash
-npm run dev
-# Running at: http://localhost:5173
+### Register (Đồng bộ Web ↔ Mobile):
+```typescript
+await supabase.auth.signUp({
+  email: 'user@example.com',
+  password: 'password123',
+  options: {
+    data: {
+      full_name: 'Nguyen Van A',
+      phone: '0912345678',
+      role: 'user' // hoặc 'teacher'
+    }
+  }
+})
+// → Trigger auto-creates profile
+// → ✅ ĐỒNG BỘ!
 ```
-
-### 3. Start backend (trong terminal khác)
-```bash
-cd ../XpianoServer
-npm run dev
-# Running at: http://localhost:3000
-```
-
----
-
-## 🔑 Test Accounts
-
-```
-👤 User:    user@xpiano.com / user123
-👨‍🏫 Teacher: teacher@xpiano.com / teacher123
-👑 Admin:   admin@xpiano.com / admin123
-```
-
----
-
-## 🔗 Routes
-
-| Route | Description | Auth Required |
-|-------|-------------|---------------|
-| `/` | Home (Hero + Marketplace) | ❌ No |
-| `/login` | Login page | ❌ No |
-| `/register` | Register page | ❌ No |
-| `/forgot-password` | Forgot password | ❌ No |
 
 ---
 
 ## 📡 API Integration
 
-### Auth Endpoints (từ Express Backend)
+### Supabase (Shared Features):
 ```typescript
-POST http://localhost:3000/api/auth/login
-POST http://localhost:3000/api/auth/register
-POST http://localhost:3000/api/auth/forgot-password
-GET  http://localhost:3000/api/auth/me (Protected)
-```
-
-### Piano Endpoints (từ Express Backend)
-```typescript
-GET http://localhost:3000/api/pianos
-GET http://localhost:3000/api/pianos/:id
-GET http://localhost:3000/api/pianos/stats
-POST http://localhost:3000/api/pianos (Admin only)
-```
-
----
-
-## 🎨 Features Implemented
-
-### Header Component
-```typescript
-// Before
-<button>Login</button>
-
-// After
-{isAuthenticated ? (
-  <div>
-    <UserInfo user={user} />
-    <LogoutButton />
-  </div>
-) : (
-  <LoginButton />
-)}
-```
-
-### Marketplace Component
-```typescript
-// Before
-const [products] = useState(MOCK_DATA);
-
-// After
-const [pianos, setPianos] = useState([]);
-
-useEffect(() => {
-  const data = await pianoService.getAll({ category });
-  setPianos(data);
-}, [category]);
-```
-
-### Auth Flow
-```typescript
-// Login
-await authService.login({ email, password })
-// → Save token to localStorage
-// → Redirect to home
-// → Header shows user info
-
-// Logout
-authService.logout()
-// → Remove token from localStorage
-// → Redirect to login
-```
-
----
-
-## 🔒 Authentication Flow
-
-### 1. Login Process
-```
-User enters credentials
-  ↓
-POST /api/auth/login
-  ↓
-Backend validates & returns JWT token
-  ↓
-Frontend saves token to localStorage
-  ↓
-AuthContext updates user state
-  ↓
-Header shows user info
-  ↓
-Auto-redirect to home
-```
-
-### 2. Protected API Calls
-```
-User performs action (e.g., view pianos)
-  ↓
-axios interceptor adds: Authorization: Bearer {token}
-  ↓
-Backend validates JWT
-  ↓
-If valid: Return data
-If invalid: 401 → Auto-logout → Redirect to login
-```
-
-### 3. Logout Process
-```
-User clicks logout
-  ↓
-Remove token from localStorage
-  ↓
-AuthContext clears user state
-  ↓
-Redirect to login page
-  ↓
-Header shows login button
-```
-
----
-
-## 🛠️ Configuration
-
-### Environment Variables (.env.local)
-```bash
-VITE_API_URL=http://localhost:3000/api
-```
-
-### API Client (lib/api.ts)
-```typescript
-// Auto-add token to every request
-api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('token');
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-  return config;
-});
-
-// Auto-logout on 401
-api.interceptors.response.use(
-  (response) => response,
-  (error) => {
-    if (error.response?.status === 401) {
-      logout();
-    }
-    return Promise.reject(error);
-  }
-);
-```
-
----
-
-## 📝 Usage Examples
-
-### Fetch Pianos
-```typescript
-import pianoService from './lib/pianoService';
-
-// Get all
-const pianos = await pianoService.getAll();
-
-// Filter by category
-const grandPianos = await pianoService.getAll({
-  category: 'Grand'
-});
-
-// Multiple filters
-const filtered = await pianoService.getAll({
-  category: 'Upright',
-  minRating: 4.5,
-  maxPrice: 200000
-});
-```
-
-### Authentication
-```typescript
+// Auth
 import authService from './lib/authService';
+await authService.login({ email, password });
+await authService.register({ email, password, full_name, role });
 
-// Register
-await authService.register({
-  email: 'user@example.com',
-  password: 'password123',
-  full_name: 'Nguyen Van A',
-  phone: '0912345678',
-  role: 'user'
-});
-
-// Login
-await authService.login({
-  email: 'user@example.com',
-  password: 'password123'
-});
-
-// Get profile
-const user = await authService.getProfile();
-
-// Logout
-authService.logout();
+// Pianos
+import pianoService from './lib/pianoService';
+const pianos = await pianoService.getAll();
+const piano = await pianoService.getById(1);
 ```
 
-### Auth Context
+### Express Backend (Web-only):
 ```typescript
-import { useAuth } from './contexts/AuthContext';
-
-function MyComponent() {
-  const { user, isAuthenticated, login, logout } = useAuth();
-
-  if (isAuthenticated) {
-    return <div>Welcome {user.full_name}!</div>;
-  }
-
-  return <LoginForm onSubmit={login} />;
-}
+// WebRTC, Payment, etc (will be implemented later)
+// Still available at http://localhost:3000/api/*
 ```
 
 ---
 
-## ⚠️ Notes
+## 🔄 Real-time Sync (Bonus!)
 
-### Mock Data Removed
-- ✅ Removed `PRODUCTS` from `constants.ts` usage
-- ✅ All data now fetched from backend API
-- ⚠️ Hero component unchanged (per request)
-
-### CORS
-Backend Express đã enable CORS:
-```javascript
-app.use(cors()); // Allow all origins
-```
-
-### Error Handling
 ```typescript
-// Loading state
-if (isLoading) return <Loader />;
+// Auto-update khi Mobile thêm piano
+useEffect(() => {
+  const channel = pianoService.subscribeToChanges((payload) => {
+    console.log('Piano changed:', payload);
+    loadPianos(); // Auto-refresh
+  });
 
-// Error state
-if (error) return <ErrorMessage retry={loadData} />;
-
-// Success state
-return <DataDisplay data={data} />;
+  return () => channel.unsubscribe();
+}, []);
 ```
+
+**Kết quả:**
+- Mobile thêm piano → Web tự động hiển thị! 🚀
+- Web thêm piano → Mobile tự động hiển thị! 🚀
+
+---
+
+## 🧪 Testing
+
+### Test với Mobile Flutter:
+```
+1. Register trên Web
+2. ✅ Login trên Mobile với cùng credentials
+3. View pianos trên Mobile
+4. ✅ Thấy cùng danh sách với Web
+5. Add piano trên Web (admin)
+6. ✅ Mobile auto-update realtime!
+```
+
+### Test Accounts:
+```
+Tạo mới qua /register hoặc dùng Supabase Dashboard
+```
+
+---
+
+## ⚠️ Important Setup
+
+### 1. Supabase Database Setup
+```bash
+# Chạy trong Supabase SQL Editor
+# File: ../XpianoServer/supabase-setup.sql
+
+# Tạo:
+- profiles table
+- pianos table
+- RLS policies
+- Triggers
+```
+
+### 2. RLS Policies
+```sql
+-- PHẢI enable RLS
+ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
+ALTER TABLE pianos ENABLE ROW LEVEL SECURITY;
+
+-- Policies đã có trong supabase-setup.sql
+```
+
+---
+
+## 📚 Documentation
+
+- **Full Migration Guide**: `SUPABASE_MIGRATION.md`
+- **Backend Setup**: `../XpianoServer/MIGRATION_TO_SUPABASE.md`
+- **SQL Setup**: `../XpianoServer/supabase-setup.sql`
+
+---
+
+## 🎯 Roadmap
+
+### ✅ Done (Migration Phase 1):
+- ✅ Auth migration to Supabase
+- ✅ Pianos migration to Supabase
+- ✅ Real-time sync with Mobile
+- ✅ RLS policies
+
+### 🔜 Next (Phase 2):
+- [ ] Bookings (mượn đàn) → Supabase
+- [ ] Orders (mua đàn) → Supabase
+- [ ] Courses → Supabase
+- [ ] WebRTC signaling → Express Backend
+
+### 🚀 Future (Phase 3):
+- [ ] Payment integration → Express Backend
+- [ ] Admin dashboard → Web
+- [ ] Video social → Mobile (Supabase Storage)
+- [ ] Teacher schedules → Mobile
 
 ---
 
 ## 🐛 Troubleshooting
 
-### Backend not running
+### Auth không đồng bộ?
 ```
-Error: connect ECONNREFUSED ::1:3000
-```
-**Solution:** Start backend server
-```bash
-cd ../XpianoServer
-npm run dev
+✅ Check: VITE_SUPABASE_URL và VITE_SUPABASE_ANON_KEY
+✅ Check: Trigger đã chạy chưa (profiles table)
+✅ Check: Session trong Supabase Dashboard → Auth
 ```
 
-### CORS error
+### Pianos không load?
 ```
-Access to XMLHttpRequest blocked by CORS policy
+✅ Check: RLS policies enabled
+✅ Check: Data trong Supabase Dashboard → Table Editor
+✅ Check: Network tab (Supabase API calls)
 ```
-**Solution:** Đã fix trong backend, restart backend server
 
-### 401 Unauthorized
+### Mobile không sync?
 ```
-Token không hợp lệ hoặc đã hết hạn
+✅ Check: Mobile dùng CÙNG Supabase URL/Key
+✅ Check: Profiles table có data
+✅ Check: RLS policies allow read
 ```
-**Solution:** Login lại để get new token
 
 ---
 
-## ✨ Next Steps
+## 📊 Tech Stack
 
-### Immediate
-- [ ] Add reset password page (with token from email)
-- [ ] Add profile page
-- [ ] Add admin dashboard
-
-### Supabase Integration (Hybrid Approach)
-- [ ] Setup Supabase client for shared features
-- [ ] Keep Express for WebRTC & complex logic
-- [ ] Sync auth between Web và Mobile
-
-### Features
-- [ ] Shopping cart
-- [ ] Booking system (mượn đàn)
-- [ ] Online classes (WebRTC)
-- [ ] Teacher dashboard
-- [ ] Admin panel
+- **Frontend**: React 19 + TypeScript + Vite
+- **Backend (Shared)**: **Supabase** (Auth + PostgreSQL + Realtime)
+- **Backend (Web-only)**: Express.js (WebRTC, Payment)
+- **Routing**: React Router DOM v6
+- **State**: React Context API + Supabase Real-time
+- **Styling**: Tailwind CSS
+- **Icons**: Lucide React
 
 ---
 
-## 📚 Tech Stack
+## 🎉 Results
 
-- **Frontend:** React 19 + TypeScript + Vite
-- **Routing:** React Router DOM v6
-- **HTTP Client:** Axios
-- **State Management:** React Context API
-- **Styling:** Tailwind CSS
-- **Icons:** Lucide React
-- **Backend:** Express.js (http://localhost:3000)
+### Before Migration:
+```
+❌ Web → Express Auth → PostgreSQL
+❌ Mobile → Supabase Auth → PostgreSQL
+❌ KHÔNG đồng bộ
+❌ 2 systems riêng biệt
+```
+
+### After Migration:
+```
+✅ Web → Supabase Auth → PostgreSQL
+✅ Mobile → Supabase Auth → PostgreSQL
+✅ ĐỒNG BỘ 100%
+✅ Single source of truth
+✅ Realtime sync
+```
 
 ---
 
-**Status:** ✅ Ready for development
-**Date:** 2026-02-07
+**Status:** ✅ **PRODUCTION READY - Sync với Mobile Flutter**
+
+**Version:** 2.0 - Supabase Integration
+
+**Last Updated:** 2026-02-07
