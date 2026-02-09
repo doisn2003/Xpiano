@@ -110,6 +110,7 @@ class AuthService {
             if (response.data.success) {
                 const { user, token } = response.data.data;
                 this.setSession(user, token);
+                return response.data; // Return full response for handling
             }
 
             return response.data;
@@ -147,6 +148,13 @@ class AuthService {
                 data: { user: null as any },
             };
         }
+    }
+
+    /**
+     * Forgot password - request OTP
+     */
+    async forgotPassword(email: string): Promise<{ success: boolean; message: string }> {
+        return this.sendOtp(email, 'recovery');
     }
 
     /**

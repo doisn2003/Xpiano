@@ -7,6 +7,7 @@ interface AuthContextType {
     isLoading: boolean;
     login: (email: string, password: string) => Promise<void>;
     register: (data: any) => Promise<void>;
+    registerVerify: (data: any) => Promise<void>;
     logout: () => Promise<void>;
     refreshUser: () => Promise<void>;
 }
@@ -66,6 +67,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setUser(response.data.user);
     };
 
+    const registerVerify = async (data: any) => {
+        const response = await authService.registerVerify(data);
+
+        if (!response.success) {
+            throw new Error(response.message);
+        }
+
+        setUser(response.data.user);
+    };
+
     const logout = async () => {
         await authService.logout();
         setUser(null);
@@ -84,6 +95,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 isLoading,
                 login,
                 register,
+                registerVerify,
                 logout,
                 refreshUser,
             }}
