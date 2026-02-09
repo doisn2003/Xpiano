@@ -149,15 +149,6 @@ export const Marketplace: React.FC = () => {
                 </p>
               </div>
             )}
-
-            {pianos.length > 0 && (
-              <div className="mt-16 text-center">
-                <button className="inline-flex items-center gap-2 text-slate-500 dark:text-slate-400 hover:text-primary dark:hover:text-primary font-semibold transition-colors group">
-                  Xem tất cả sản phẩm
-                  <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-                </button>
-              </div>
-            )}
           </>
         )}
       </div>
