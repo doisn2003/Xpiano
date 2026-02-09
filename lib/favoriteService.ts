@@ -1,4 +1,4 @@
-import { supabase } from './supabase';
+import api from './api';
 
 export interface Favorite {
     id: number;
@@ -24,19 +24,15 @@ class FavoriteService {
      */
     async getMyFavorites(): Promise<FavoriteWithPiano[]> {
         try {
-            const { data, error } = await supabase
-                .from('favorites')
-                .select(`
-          *,
-          piano:pianos(id, name, image_url, category, price_per_hour, rating)
-        `)
-                .order('created_at', { ascending: false });
-
-            if (error) throw error;
-            return data || [];
+            const response = await api.get('/favorites');
+            if (response.data.success) {
+                return response.data.data;
+            }
+            return [];
         } catch (error: any) {
             console.error('Error fetching favorites:', error);
-            throw error;
+            // If 401, maybe return empty? Or let AuthContext handle?
+            return [];
         }
     }
 
@@ -45,20 +41,15 @@ class FavoriteService {
      */
     async isFavorited(pianoId: number): Promise<boolean> {
         try {
-            const { data: { user } } = await supabase.auth.getUser();
-            if (!user) return false;
+            if (!localStorage.getItem('token')) return false;
 
-            const { data, error } = await supabase
-                .from('favorites')
-                .select('id')
-                .eq('piano_id', pianoId)
-                .eq('user_id', user.id)
-                .maybeSingle();
-
-            if (error && error.code !== 'PGRST116') throw error;
-            return !!data;
+            const response = await api.get(`/favorites/check/${pianoId}`);
+            if (response.data.success) {
+                return response.data.isFavorited;
+            }
+            return false;
         } catch (error: any) {
-            console.error('Error checking favorite:', error);
+            // console.error('Error checking favorite:', error);
             return false;
         }
     }
@@ -68,25 +59,10 @@ class FavoriteService {
      */
     async addFavorite(pianoId: number): Promise<void> {
         try {
-            const { data: { user } } = await supabase.auth.getUser();
-            if (!user) throw new Error('Bạn cần đăng nhập để thêm yêu thích');
-
-            const { error } = await supabase
-                .from('favorites')
-                .insert({
-                    user_id: user.id,
-                    piano_id: pianoId,
-                });
-
-            if (error) {
-                if (error.code === '23505') {
-                    throw new Error('Đàn này đã có trong danh sách yêu thích');
-                }
-                throw error;
-            }
+            await api.post(`/favorites/${pianoId}`);
         } catch (error: any) {
             console.error('Error adding favorite:', error);
-            throw error;
+            throw new Error(error.response?.data?.message || 'Không thể thêm yêu thích');
         }
     }
 
@@ -95,19 +71,10 @@ class FavoriteService {
      */
     async removeFavorite(pianoId: number): Promise<void> {
         try {
-            const { data: { user } } = await supabase.auth.getUser();
-            if (!user) throw new Error('Bạn cần đăng nhập');
-
-            const { error } = await supabase
-                .from('favorites')
-                .delete()
-                .eq('user_id', user.id)
-                .eq('piano_id', pianoId);
-
-            if (error) throw error;
+            await api.delete(`/favorites/${pianoId}`);
         } catch (error: any) {
             console.error('Error removing favorite:', error);
-            throw error;
+            throw new Error(error.response?.data?.message || 'Không thể xóa yêu thích');
         }
     }
 
@@ -136,13 +103,11 @@ class FavoriteService {
      */
     async getFavoriteCount(pianoId: number): Promise<number> {
         try {
-            const { count, error } = await supabase
-                .from('favorites')
-                .select('*', { count: 'exact', head: true })
-                .eq('piano_id', pianoId);
-
-            if (error) throw error;
-            return count || 0;
+            const response = await api.get(`/favorites/count/${pianoId}`);
+            if (response.data.success) {
+                return response.data.count;
+            }
+            return 0;
         } catch (error: any) {
             console.error('Error getting favorite count:', error);
             return 0;
