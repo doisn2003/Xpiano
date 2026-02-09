@@ -97,7 +97,7 @@ export const RegisterPage: React.FC = () => {
                         Đăng ký tài khoản
                     </h1>
                     <p className="text-slate-400 text-sm">
-                        Tạo tài khoản để tham gia cộng đồng Spiano
+                        Tạo tài khoản để tham gia cộng đồng Xpiano
                     </p>
                 </div>
 

@@ -24,8 +24,12 @@ export const Header: React.FC = () => {
         <div className="flex items-center justify-between gap-4">
           {/* Logo */}
           <a href="/" className="flex items-center gap-2 group">
-            <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center text-white font-display font-bold text-xl shadow-lg group-hover:scale-105 transition-transform">
-              X
+            <div className="w-10 h-10 rounded-full overflow-hidden shadow-lg group-hover:scale-105 transition-transform">
+              <img 
+                src="/logo.jpg" 
+                alt="Xpiano Logo" 
+                className="w-full h-full object-cover"
+              />
             </div>
             <span className="font-display font-bold text-xl tracking-tight text-slate-900 dark:text-white hidden sm:block">
               Xpiano

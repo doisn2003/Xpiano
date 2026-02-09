@@ -5,7 +5,7 @@ export interface User {
     email: string;
     full_name: string;
     phone?: string;
-    role: 'user' | 'admin' | 'teacher';
+    role: 'user' | 'admin' | 'teacher' | 'warehouse_owner';
     is_verified: boolean;
     avatar_url?: string;
 }
@@ -21,6 +21,21 @@ export interface RegisterData {
     full_name: string;
     phone?: string;
     role?: 'user' | 'teacher';
+}
+
+export interface AdminLoginCredentials {
+    email: string;
+    password: string;
+    role: 'admin' | 'warehouse_owner';
+}
+
+export interface AdminRegisterData {
+    email: string;
+    password: string;
+    full_name: string;
+    phone?: string;
+    role: 'admin' | 'warehouse_owner';
+    token: string;
 }
 
 export interface AuthResponse {
@@ -139,6 +154,60 @@ class AuthService {
             return {
                 success: false,
                 message: response.data.message || 'Đăng nhập thất bại',
+                data: { user: null as any },
+            };
+        } catch (error: any) {
+            return {
+                success: false,
+                message: error.response?.data?.message || 'Có lỗi xảy ra',
+                data: { user: null as any },
+            };
+        }
+    }
+
+    /**
+     * Admin login - validates role on server
+     */
+    async adminLogin(credentials: AdminLoginCredentials): Promise<AuthResponse> {
+        try {
+            const response = await api.post('/auth/admin-login', credentials);
+
+            if (response.data.success) {
+                const { user, token } = response.data.data;
+                this.setSession(user, token);
+                return response.data;
+            }
+
+            return {
+                success: false,
+                message: response.data.message || 'Đăng nhập thất bại',
+                data: { user: null as any },
+            };
+        } catch (error: any) {
+            return {
+                success: false,
+                message: error.response?.data?.message || 'Có lỗi xảy ra',
+                data: { user: null as any },
+            };
+        }
+    }
+
+    /**
+     * Admin / Warehouse Owner register with OTP
+     */
+    async adminRegister(data: AdminRegisterData): Promise<AuthResponse> {
+        try {
+            const response = await api.post('/auth/admin-register', data);
+
+            if (response.data.success) {
+                const { user, token } = response.data.data;
+                this.setSession(user, token);
+                return response.data;
+            }
+
+            return {
+                success: false,
+                message: response.data.message || 'Đăng ký thất bại',
                 data: { user: null as any },
             };
         } catch (error: any) {

@@ -11,6 +11,7 @@ import { ForgotPasswordPage } from './pages/ForgotPasswordPage';
 import { PianoDetailPage } from './pages/PianoDetailPage';
 import { ProfilePage } from './pages/ProfilePage';
 import { AdminDashboard } from './pages/AdminDashboard';
+import { LoginAdmin } from './pages/LoginAdmin';
 
 function HomePage() {
   return (
@@ -38,6 +39,7 @@ function App() {
             <Route path="/login" element={<LoginPage />} />
             <Route path="/register" element={<RegisterPage />} />
             <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+            <Route path="/login-admin" element={<LoginAdmin />} />
           </Routes>
         </div>
       </AuthProvider>
