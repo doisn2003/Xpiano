@@ -10,6 +10,32 @@ export const LoginPage: React.FC = () => {
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
     const [isLoading, setIsLoading] = useState(false);
+    const [loginMethod, setLoginMethod] = useState<'password' | 'otp'>('password');
+    const [role, setRole] = useState<'user' | 'teacher'>('user');
+    const [otp, setOtp] = useState('');
+    const [otpSent, setOtpSent] = useState(false);
+
+    const handleSendOtp = async () => {
+        if (!email) {
+            setError('Vui lòng nhập email');
+            return;
+        }
+        setIsLoading(true);
+        try {
+            const res = await authService.sendOtp(email, 'magiclink'); // Using magiclink type for login OTP
+            if (res.success) {
+                setOtpSent(true);
+                setError('');
+                alert('Mã OTP đã được gửi đến email của bạn');
+            } else {
+                setError(res.message);
+            }
+        } catch (err) {
+            setError('Không thể gửi mã.');
+        } finally {
+            setIsLoading(false);
+        }
+    };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -17,8 +43,13 @@ export const LoginPage: React.FC = () => {
         setIsLoading(true);
 
         try {
-            await login(email, password);
-            navigate('/');
+            if (loginMethod === 'password') {
+                await login(email, password);
+            } else {
+                // Login with OTP
+                await authService.loginOtp(email, otp);
+            }
+            navigate(role === 'teacher' ? '/teacher-dashboard' : '/'); // Redirect based on role
         } catch (err: any) {
             setError(err.response?.data?.message || 'Đăng nhập thất bại. Vui lòng thử lại.');
         } finally {
@@ -27,104 +58,151 @@ export const LoginPage: React.FC = () => {
     };
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 flex items-center justify-center p-4">
+        <div className="min-h-screen bg-[#111] flex items-center justify-center p-4">
             <div className="max-w-md w-full">
                 {/* Logo */}
                 <div className="text-center mb-8">
-                    <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary text-white mb-4 shadow-lg">
-                        <Music className="w-8 h-8" />
-                    </div>
-                    <h1 className="text-3xl font-display font-bold text-slate-900 dark:text-white">
-                        Chào mừng trở lại
+                    <h1 className="text-4xl font-bold text-[#F0C058] tracking-widest mb-2 font-display">
+                        SPIANO
                     </h1>
-                    <p className="text-slate-500 dark:text-slate-400 mt-2">
-                        Đăng nhập vào tài khoản Xpiano của bạn
+                    <p className="text-slate-400 text-sm">
+                        Học đàn & Cà phê
                     </p>
                 </div>
 
+                {/* Role Tabs */}
+                <div className="bg-[#1A1A1A] p-1 rounded-xl flex mb-6">
+                    <button
+                        onClick={() => setRole('user')}
+                        className={`flex-1 py-2 rounded-lg text-sm font-medium transition-all ${role === 'user'
+                            ? 'bg-[#111] text-[#F0C058] border border-[#F0C058]/30 shadow-sm'
+                            : 'text-slate-400 hover:text-slate-200'
+                            }`}
+                    >
+                        Khách/Học viên
+                    </button>
+                    <button
+                        onClick={() => setRole('teacher')}
+                        className={`flex-1 py-2 rounded-lg text-sm font-medium transition-all ${role === 'teacher'
+                            ? 'bg-[#111] text-[#F0C058] border border-[#F0C058]/30 shadow-sm'
+                            : 'text-slate-400 hover:text-slate-200'
+                            }`}
+                    >
+                        Giáo viên
+                    </button>
+                </div>
+
                 {/* Login Form */}
-                <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-xl p-8">
+                <div className="bg-transparent rounded-2xl p-0">
                     {error && (
-                        <div className="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg flex items-start gap-3">
+                        <div className="mb-6 p-4 bg-red-900/20 border border-red-800 rounded-lg flex items-start gap-3">
                             <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
-                            <p className="text-sm text-red-800 dark:text-red-200">{error}</p>
+                            <p className="text-sm text-red-200">{error}</p>
                         </div>
                     )}
 
-                    <form onSubmit={handleSubmit} className="space-y-5">
+                    <form onSubmit={handleSubmit} className="space-y-4">
                         <div>
-                            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                                Email
-                            </label>
                             <div className="relative">
-                                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+                                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500" />
                                 <input
                                     type="email"
                                     value={email}
                                     onChange={(e) => setEmail(e.target.value)}
                                     required
-                                    className="w-full pl-10 pr-4 py-3 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
-                                    placeholder="your@email.com"
+                                    className="w-full pl-12 pr-4 py-3.5 rounded-xl border border-slate-700 bg-[#1A1A1A] text-white focus:ring-1 focus:ring-[#F0C058] focus:border-[#F0C058] transition-all placeholder:text-slate-600"
+                                    placeholder="Số điện thoại / Email"
                                 />
                             </div>
                         </div>
 
-                        <div>
-                            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                                Mật khẩu
-                            </label>
-                            <div className="relative">
-                                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
-                                <input
-                                    type="password"
-                                    value={password}
-                                    onChange={(e) => setPassword(e.target.value)}
-                                    required
-                                    className="w-full pl-10 pr-4 py-3 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
-                                    placeholder="••••••••"
-                                />
-                            </div>
-                        </div>
+                        {loginMethod === 'password' ? (
+                            <div>
+                                <div className="relative">
+                                    <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500" />
+                                    <input
+                                        type="password"
+                                        value={password}
+                                        onChange={(e) => setPassword(e.target.value)}
+                                        required
+                                        className="w-full pl-12 pr-4 py-3.5 rounded-xl border border-slate-700 bg-[#1A1A1A] text-white focus:ring-1 focus:ring-[#F0C058] focus:border-[#F0C058] transition-all placeholder:text-slate-600"
+                                        placeholder="Mật khẩu"
+                                    />
+                                    <button type="button" className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300">
 
-                        <div className="flex items-center justify-between text-sm">
-                            <label className="flex items-center gap-2 cursor-pointer">
-                                <input
-                                    type="checkbox"
-                                    className="w-4 h-4 rounded border-slate-300 dark:border-slate-600 text-primary focus:ring-2 focus:ring-primary"
-                                />
-                                <span className="text-slate-600 dark:text-slate-400">Ghi nhớ đăng nhập</span>
-                            </label>
-                            <Link to="/forgot-password" className="text-primary hover:text-cyan-700 font-medium">
+                                    </button>
+                                </div>
+                            </div>
+                        ) : (
+                            <div>
+                                <div className="relative flex gap-2">
+                                    <input
+                                        type="text"
+                                        value={otp}
+                                        onChange={(e) => setOtp(e.target.value)}
+                                        required
+                                        className="w-full pl-4 pr-4 py-3.5 rounded-xl border border-slate-700 bg-[#1A1A1A] text-white focus:ring-1 focus:ring-[#F0C058] focus:border-[#F0C058] transition-all placeholder:text-slate-600"
+                                        placeholder="Mã xác thực (OTP)"
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={handleSendOtp}
+                                        disabled={isLoading || otpSent}
+                                        className="px-4 py-2 bg-[#F0C058] text-black font-medium rounded-xl hover:bg-[#d9ab4b] disabled:opacity-50 whitespace-nowrap"
+                                    >
+                                        {otpSent ? 'Đã gửi' : 'Gửi mã'}
+                                    </button>
+                                </div>
+                            </div>
+                        )}
+
+                        <div className="flex items-center justify-between text-sm mt-2">
+                            <Link to="/forgot-password" className="text-slate-400 hover:text-[#F0C058] transition-colors">
                                 Quên mật khẩu?
                             </Link>
+                            <button
+                                type="button"
+                                onClick={() => setLoginMethod(loginMethod === 'password' ? 'otp' : 'password')}
+                                className="text-[#F0C058] hover:text-[#d9ab4b] font-medium transition-colors"
+                            >
+                                {loginMethod === 'password' ? 'Đăng nhập bằng OTP' : 'Đăng nhập bằng Mật khẩu'}
+                            </button>
                         </div>
 
                         <button
                             type="submit"
                             disabled={isLoading}
-                            className="w-full bg-primary hover:bg-cyan-700 text-white py-3 rounded-lg font-semibold shadow-lg hover:shadow-xl transition-all transform active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="w-full bg-gradient-to-r from-[#F0C058] to-[#d9ab4b] hover:from-[#E0B048] hover:to-[#c99b3b] text-[#111] py-3.5 rounded-xl font-bold shadow-lg shadow-[#F0C058]/20 hover:shadow-[#F0C058]/30 transition-all transform active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed mt-6 uppercase tracking-wide"
                         >
-                            {isLoading ? 'Đang đăng nhập...' : 'Đăng nhập'}
+                            {isLoading ? 'Đang xử lý...' : 'Đăng nhập'}
                         </button>
                     </form>
 
-                    <div className="mt-6 text-center">
-                        <p className="text-slate-600 dark:text-slate-400 text-sm">
+                    <div className="mt-8 flex items-center gap-4">
+                        <div className="h-[1px] bg-slate-800 flex-1"></div>
+                        <p className="text-slate-500 text-xs">Hoặc đăng nhập bằng</p>
+                        <div className="h-[1px] bg-slate-800 flex-1"></div>
+                    </div>
+
+                    <div className="grid grid-cols-3 gap-4 mt-6">
+                        <button className="flex items-center justify-center py-3 bg-[#1A1A1A] border border-slate-700 rounded-full hover:bg-slate-800 transition-colors group">
+                            <span className="font-bold text-white">G</span>
+                        </button>
+                        <button className="flex items-center justify-center py-3 bg-[#1A1A1A] border border-slate-700 rounded-full hover:bg-slate-800 transition-colors">
+                            <span className="font-bold text-white"></span>
+                        </button>
+                        <button className="flex items-center justify-center py-3 bg-[#1A1A1A] border border-slate-700 rounded-full hover:bg-slate-800 transition-colors">
+                            <span className="font-bold text-white">💬</span>
+                        </button>
+                    </div>
+
+                    <div className="mt-8 text-center">
+                        <p className="text-slate-500 text-sm">
                             Chưa có tài khoản?{' '}
-                            <Link to="/register" className="text-primary hover:text-cyan-700 font-semibold">
-                                Đăng ký ngay
+                            <Link to="/register" className="text-[#F0C058] hover:text-[#d9ab4b] font-semibold">
+                                Đăng ký
                             </Link>
                         </p>
-                    </div>
-                </div>
-
-                {/* Quick Login (Demo) */}
-                <div className="mt-6 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
-                    <p className="text-xs text-blue-800 dark:text-blue-200 mb-2 font-semibold">🔑 Demo Credentials:</p>
-                    <div className="space-y-1 text-xs text-blue-700 dark:text-blue-300">
-                        <p>👤 User: user@xpiano.com / user123</p>
-                        <p>👨‍🏫 Teacher: teacher@xpiano.com / teacher123</p>
-                        <p>👑 Admin: admin@xpiano.com / admin123</p>
                     </div>
                 </div>
             </div>

@@ -86,28 +86,81 @@ class AuthService {
     }
 
     /**
-     * Forgot password - Send reset email
+     * Send OTP for verification
      */
-    async forgotPassword(email: string): Promise<{ success: boolean; message: string }> {
+    async sendOtp(email: string, type: 'signup' | 'recovery' | 'magiclink' = 'signup'): Promise<{ success: boolean; message: string }> {
         try {
-            const response = await api.post('/auth/forgot-password', { email });
+            const response = await api.post('/auth/send-otp', { email, type });
             return response.data;
         } catch (error: any) {
             return {
                 success: false,
-                message: error.response?.data?.message || 'Có lỗi xảy ra',
+                message: error.response?.data?.message || 'Có lỗi xảy ra khi gửi mã',
             };
         }
     }
 
     /**
-     * Reset password with token
+     * Register with OTP verification
      */
-    async resetPassword(newPassword: string): Promise<{ success: boolean; message: string }> {
+    async registerVerify(data: RegisterData & { token: string, date_of_birth?: string }): Promise<AuthResponse> {
         try {
-            // Token is expected to be in headers via interceptor if user is logged in
-            // Or passed in body if we are using a token from URL.
-            // Our backend resetPassword expects authenticated user usually.
+            const response = await api.post('/auth/register-verify', data);
+
+            if (response.data.success) {
+                const { user, token } = response.data.data;
+                this.setSession(user, token);
+            }
+
+            return response.data;
+        } catch (error: any) {
+            return {
+                success: false,
+                message: error.response?.data?.message || 'Có lỗi xảy ra',
+                data: { user: null as any },
+            };
+        }
+    }
+
+    /**
+     * Login with OTP (Magic Link logic but with code input)
+     */
+    async loginOtp(email: string, token: string): Promise<AuthResponse> {
+        try {
+            const response = await api.post('/auth/login-otp', { email, token });
+
+            if (response.data.success) {
+                const { user, token: accessToken } = response.data.data;
+                this.setSession(user, accessToken);
+                return response.data;
+            }
+
+            return {
+                success: false,
+                message: response.data.message || 'Đăng nhập thất bại',
+                data: { user: null as any },
+            };
+        } catch (error: any) {
+            return {
+                success: false,
+                message: error.response?.data?.message || 'Có lỗi xảy ra',
+                data: { user: null as any },
+            };
+        }
+    }
+
+    /**
+     * Reset password with OTP
+     */
+    async resetPassword(newPassword: string, email?: string, token?: string): Promise<{ success: boolean; message: string }> {
+        try {
+            // Check if we are doing OTP flow (email + token provided)
+            if (email && token) {
+                const response = await api.post('/auth/reset-password', { email, token, new_password: newPassword });
+                return response.data;
+            }
+
+            // Fallback to authenticated reset (if logged in)
             const response = await api.post('/auth/reset-password', { new_password: newPassword });
             return response.data;
         } catch (error: any) {
