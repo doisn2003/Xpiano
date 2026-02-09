@@ -45,12 +45,19 @@ class PianoService {
 
             if (error) {
                 console.error('Error fetching pianos:', error);
-                throw new Error('Không thể tải danh sách piano');
+                console.error('Error details:', {
+                    message: error.message,
+                    details: error.details,
+                    hint: error.hint,
+                    code: error.code
+                });
+                throw new Error(`Không thể tải danh sách piano: ${error.message}`);
             }
 
             return data || [];
         } catch (error: any) {
             console.error('Piano service error:', error);
+            console.error('Full error:', JSON.stringify(error, null, 2));
             throw error;
         }
     }

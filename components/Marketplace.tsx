@@ -12,10 +12,46 @@ export const Marketplace: React.FC = () => {
   const [error, setError] = useState('');
 
   useEffect(() => {
+    let isMounted = true;
+
+    const loadPianos = async () => {
+      setIsLoading(true);
+      setError('');
+      try {
+        const data = await pianoService.getAll({
+          category: activeCategory !== 'Tất cả' ? activeCategory : undefined,
+        });
+
+        // Only update state if component is still mounted
+        if (isMounted) {
+          setPianos(data);
+        }
+      } catch (err: any) {
+        if (isMounted) {
+          // Don't show error for AbortError
+          if (err.name !== 'AbortError') {
+            setError(err.response?.data?.message || 'Không thể tải danh sách piano');
+            console.error('Error loading pianos:', err);
+          }
+        }
+      } finally {
+        if (isMounted) {
+          setIsLoading(false);
+        }
+      }
+    };
+
     loadPianos();
+
+    // Cleanup function
+    return () => {
+      isMounted = false;
+    };
   }, [activeCategory]);
 
   const loadPianos = async () => {
+    // This function is now defined inside useEffect
+    // Keeping this stub for any manual refresh button
     setIsLoading(true);
     setError('');
     try {
@@ -24,8 +60,10 @@ export const Marketplace: React.FC = () => {
       });
       setPianos(data);
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Không thể tải danh sách piano');
-      console.error('Error loading pianos:', err);
+      if (err.name !== 'AbortError') {
+        setError(err.response?.data?.message || 'Không thể tải danh sách piano');
+        console.error('Error loading pianos:', err);
+      }
     } finally {
       setIsLoading(false);
     }
@@ -61,8 +99,8 @@ export const Marketplace: React.FC = () => {
                 key={cat}
                 onClick={() => setActiveCategory(cat)}
                 className={`px-5 py-2.5 rounded-xl text-sm font-medium whitespace-nowrap transition-all duration-200 ${activeCategory === cat
-                    ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-md'
-                    : 'bg-slate-100 dark:bg-slate-700/50 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
+                  ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-md'
+                  : 'bg-slate-100 dark:bg-slate-700/50 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
                   }`}
               >
                 {cat}

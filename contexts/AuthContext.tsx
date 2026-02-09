@@ -33,26 +33,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     const initializeAuth = async () => {
         try {
-            // Check if user is already logged in
-            const isAuth = await authService.isAuthenticated();
+            setIsLoading(true);
 
-            if (isAuth) {
-                const currentUser = await authService.getProfile();
-                setUser(currentUser);
-            } else {
-                // Try to get from localStorage (fast path)
-                const cachedUser = authService.getCurrentUser();
-                if (cachedUser) {
-                    setUser(cachedUser);
-                    // Verify in background
-                    const profile = await authService.getProfile();
-                    if (profile) {
-                        setUser(profile);
-                    } else {
-                        setUser(null);
-                    }
-                }
-            }
+            // Simply get profile - Supabase handles session internally
+            const profile = await authService.getProfile();
+            setUser(profile);
         } catch (error) {
             console.error('Auth initialization error:', error);
             setUser(null);
