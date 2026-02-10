@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { GoldButton } from '../components/GoldButton';
 import authService from '../lib/authService';
 import { Music, Mail, AlertCircle, CheckCircle, ArrowLeft } from 'lucide-react';
 
@@ -95,13 +96,13 @@ export const ForgotPasswordPage: React.FC = () => {
                                 />
                             </div>
 
-                            <button
+                            <GoldButton
                                 type="submit"
                                 disabled={isLoading}
-                                className="w-full bg-[#F0C058] hover:bg-[#d9ab4b] text-[#111] py-3.5 rounded-xl font-bold shadow-lg shadow-[#F0C058]/20 transition-all active:scale-[0.98] disabled:opacity-50 uppercase tracking-wide"
+                                className="w-full py-3.5 rounded-xl font-bold shadow-lg shadow-[#F0C058]/20 transition-all active:scale-[0.98] disabled:opacity-50 uppercase tracking-wide"
                             >
                                 {isLoading ? 'Đang gửi...' : 'Gửi mã'}
-                            </button>
+                            </GoldButton>
                         </form>
                     ) : (
                         <form onSubmit={handleResetPassword} className="space-y-4">
@@ -129,13 +130,13 @@ export const ForgotPasswordPage: React.FC = () => {
                                 />
                             </div>
 
-                            <button
+                            <GoldButton
                                 type="submit"
                                 disabled={isLoading}
-                                className="w-full bg-[#F0C058] hover:bg-[#d9ab4b] text-[#111] py-3.5 rounded-xl font-bold shadow-lg shadow-[#F0C058]/20 transition-all active:scale-[0.98] disabled:opacity-50 uppercase tracking-wide"
+                                className="w-full py-3.5 rounded-xl font-bold shadow-lg shadow-[#F0C058]/20 transition-all active:scale-[0.98] disabled:opacity-50 uppercase tracking-wide"
                             >
                                 {isLoading ? 'Đang xử lý...' : 'Đặt lại mật khẩu'}
-                            </button>
+                            </GoldButton>
                         </form>
                     )}
 

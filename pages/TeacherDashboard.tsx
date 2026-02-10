@@ -1,13 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { GoldButton } from '../components/GoldButton';
 import {
     GraduationCap, BookOpen, Users, DollarSign, Plus, Calendar,
-    Clock, MapPin, CheckCircle, XCircle, AlertCircle, Upload, Save, Edit2
+    Clock, MapPin, CheckCircle, XCircle, AlertCircle, Upload, Save, Edit2,
+    Camera, Video, FileImage
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { Header } from '../components/Header';
 import { Footer } from '../components/Footer';
 import teacherService, { TeacherProfile, Course, TeacherStats } from '../lib/teacherService';
+import uploadService from '../lib/uploadService';
 
 export const TeacherDashboard: React.FC = () => {
     const { user, isAuthenticated, isLoading: authLoading } = useAuth();
@@ -43,6 +46,13 @@ export const TeacherDashboard: React.FC = () => {
     });
     const [specializationInput, setSpecializationInput] = useState('');
     const [locationInput, setLocationInput] = useState('');
+
+    // File upload state
+    const [avatarUrl, setAvatarUrl] = useState('');
+    const [videoDemoUrl, setVideoDemoUrl] = useState('');
+    const [certificateUrls, setCertificateUrls] = useState<string[]>([]);
+    const [uploadProgress, setUploadProgress] = useState<Record<string, number>>({});
+    const [uploadingField, setUploadingField] = useState<string | null>(null);
 
     // Course form state
     const [showCourseModal, setShowCourseModal] = useState(false);
@@ -103,6 +113,9 @@ export const TeacherDashboard: React.FC = () => {
                     account_holder: profileData.account_holder || '',
                     certificates_description: profileData.certificates_description || '',
                 });
+                setAvatarUrl(profileData.avatar_url || '');
+                setVideoDemoUrl(profileData.video_demo_url || '');
+                setCertificateUrls(profileData.certificate_urls || []);
             }
         } catch (err: any) {
             setError(err.message);
@@ -155,7 +168,10 @@ export const TeacherDashboard: React.FC = () => {
             const result = await teacherService.submitProfile({
                 ...profileForm,
                 full_name: fullName,
-                bio: bio
+                bio: bio,
+                avatar_url: avatarUrl || undefined,
+                video_demo_url: videoDemoUrl || undefined,
+                certificate_urls: certificateUrls.length > 0 ? certificateUrls : undefined,
             });
             setSuccess(result.message);
             setShowProfileForm(false);
@@ -232,6 +248,75 @@ export const TeacherDashboard: React.FC = () => {
             ...profileForm,
             locations: profileForm.locations.filter(l => l !== loc)
         });
+    };
+
+    // ─── File Upload Handlers ────────────────────────────────────────────
+
+    const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        try {
+            setError('');
+            setUploadingField('avatar');
+            setUploadProgress(prev => ({ ...prev, avatar: 0 }));
+            const publicUrl = await uploadService.uploadAvatar(file, (p) => {
+                setUploadProgress(prev => ({ ...prev, avatar: p }));
+            });
+            setAvatarUrl(publicUrl);
+            setSuccess('Upload ảnh đại diện thành công!');
+        } catch (err: any) {
+            setError(err.message);
+        } finally {
+            setUploadingField(null);
+            setUploadProgress(prev => ({ ...prev, avatar: 0 }));
+            e.target.value = '';
+        }
+    };
+
+    const handleVideoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        try {
+            setError('');
+            setUploadingField('video');
+            setUploadProgress(prev => ({ ...prev, video: 0 }));
+            const publicUrl = await uploadService.uploadCourseVideo(file, (p) => {
+                setUploadProgress(prev => ({ ...prev, video: p }));
+            });
+            setVideoDemoUrl(publicUrl);
+            setSuccess('Upload video demo thành công!');
+        } catch (err: any) {
+            setError(err.message);
+        } finally {
+            setUploadingField(null);
+            setUploadProgress(prev => ({ ...prev, video: 0 }));
+            e.target.value = '';
+        }
+    };
+
+    const handleCertificateUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        try {
+            setError('');
+            setUploadingField('cert');
+            setUploadProgress(prev => ({ ...prev, cert: 0 }));
+            const publicUrl = await uploadService.uploadCertificate(file, (p) => {
+                setUploadProgress(prev => ({ ...prev, cert: p }));
+            });
+            setCertificateUrls(prev => [...prev, publicUrl]);
+            setSuccess('Upload chứng chỉ thành công!');
+        } catch (err: any) {
+            setError(err.message);
+        } finally {
+            setUploadingField(null);
+            setUploadProgress(prev => ({ ...prev, cert: 0 }));
+            e.target.value = '';
+        }
+    };
+
+    const removeCertificateUrl = (index: number) => {
+        setCertificateUrls(prev => prev.filter((_, i) => i !== index));
     };
 
     // Show loading state while checking authentication
@@ -361,13 +446,13 @@ export const TeacherDashboard: React.FC = () => {
                                             className="flex-1 px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white"
                                             placeholder="VD: Piano, Lý thuyết nhạc..."
                                         />
-                                        <button
+                                        <GoldButton
                                             type="button"
                                             onClick={addSpecialization}
-                                            className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-cyan-700"
+                                            className="px-4 py-2 rounded-lg"
                                         >
                                             Thêm
-                                        </button>
+                                        </GoldButton>
                                     </div>
                                     <div className="flex flex-wrap gap-2">
                                         {profileForm.specializations.map((spec) => (
@@ -376,9 +461,9 @@ export const TeacherDashboard: React.FC = () => {
                                                 className="px-3 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 rounded-full text-sm flex items-center gap-2"
                                             >
                                                 {spec}
-                                                <button onClick={() => removeSpecialization(spec)} className="hover:text-red-600">
+                                                <GoldButton onClick={() => removeSpecialization(spec)} className="!p-0.5 !bg-transparent !bg-none hover:text-red-600">
                                                     ×
-                                                </button>
+                                                </GoldButton>
                                             </span>
                                         ))}
                                     </div>
@@ -480,13 +565,13 @@ export const TeacherDashboard: React.FC = () => {
                                                 className="flex-1 px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white"
                                                 placeholder="VD: Cầu Giấy, Ba Đình..."
                                             />
-                                            <button
+                                            <GoldButton
                                                 type="button"
                                                 onClick={addLocation}
-                                                className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-cyan-700"
+                                                className="px-4 py-2 rounded-lg"
                                             >
                                                 Thêm
-                                            </button>
+                                            </GoldButton>
                                         </div>
                                         <div className="flex flex-wrap gap-2">
                                             {profileForm.locations.map((loc) => (
@@ -495,9 +580,9 @@ export const TeacherDashboard: React.FC = () => {
                                                     className="px-3 py-1 bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300 rounded-full text-sm flex items-center gap-2"
                                                 >
                                                     {loc}
-                                                    <button onClick={() => removeLocation(loc)} className="hover:text-red-600">
+                                                    <GoldButton onClick={() => removeLocation(loc)} className="!p-0.5 !bg-transparent !bg-none hover:text-red-600">
                                                         ×
-                                                    </button>
+                                                    </GoldButton>
                                                 </span>
                                             ))}
                                         </div>
@@ -592,21 +677,137 @@ export const TeacherDashboard: React.FC = () => {
                                         rows={3}
                                         placeholder="VD: Tốt nghiệp xuất sắc Học viện Âm nhạc Quốc gia Việt Nam..."
                                     />
-                                    <p className="text-xs text-slate-500 mt-1">
-                                        Upload file chứng chỉ sẽ được hỗ trợ trong phiên bản tiếp theo
-                                    </p>
+                                </div>
+
+                                {/* Certificate Images Upload */}
+                                <div className="md:col-span-2">
+                                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                                        <FileImage className="w-4 h-4 inline mr-1" />
+                                        Ảnh chứng chỉ
+                                    </label>
+                                    <div className="flex flex-wrap gap-3 mb-3">
+                                        {certificateUrls.map((url, i) => (
+                                            <div key={i} className="relative group w-24 h-24 rounded-lg overflow-hidden border border-slate-300 dark:border-slate-600">
+                                                <img src={url} alt={`Cert ${i + 1}`} className="w-full h-full object-cover" />
+                                                <GoldButton
+                                                    type="button"
+                                                    onClick={() => removeCertificateUrl(i)}
+                                                    className="absolute top-1 right-1 w-5 h-5 !p-0 !bg-red-500 !bg-none text-white rounded-full text-xs flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                                                >
+                                                    ×
+                                                </GoldButton>
+                                            </div>
+                                        ))}
+                                        <label className="w-24 h-24 rounded-lg border-2 border-dashed border-slate-300 dark:border-slate-600 flex flex-col items-center justify-center cursor-pointer hover:border-primary transition-colors">
+                                            {uploadingField === 'cert' ? (
+                                                <span className="text-xs font-bold text-primary">{uploadProgress.cert || 0}%</span>
+                                            ) : (
+                                                <>
+                                                    <Plus className="w-6 h-6 text-slate-400" />
+                                                    <span className="text-xs text-slate-400 mt-1">Thêm ảnh</span>
+                                                </>
+                                            )}
+                                            <input
+                                                type="file"
+                                                accept=".jpg,.jpeg,.png,.webp"
+                                                onChange={handleCertificateUpload}
+                                                className="hidden"
+                                                disabled={uploadingField === 'cert'}
+                                            />
+                                        </label>
+                                    </div>
+                                    <p className="text-xs text-slate-500">JPG, PNG, WEBP (tối đa 5MB mỗi ảnh)</p>
+                                </div>
+
+                                {/* Avatar Upload */}
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                                        <Camera className="w-4 h-4 inline mr-1" />
+                                        Ảnh đại diện giáo viên
+                                    </label>
+                                    <div className="flex items-center gap-4">
+                                        <div className="relative group w-20 h-20 rounded-full overflow-hidden bg-slate-200 dark:bg-slate-700 flex items-center justify-center">
+                                            {avatarUrl ? (
+                                                <img src={avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
+                                            ) : (
+                                                <Camera className="w-8 h-8 text-slate-400" />
+                                            )}
+                                            <label className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 cursor-pointer transition-opacity rounded-full">
+                                                {uploadingField === 'avatar' ? (
+                                                    <span className="text-white text-xs font-bold">{uploadProgress.avatar || 0}%</span>
+                                                ) : (
+                                                    <Camera className="w-5 h-5 text-white" />
+                                                )}
+                                                <input
+                                                    type="file"
+                                                    accept=".jpg,.jpeg,.png,.webp"
+                                                    onChange={handleAvatarUpload}
+                                                    className="hidden"
+                                                    disabled={uploadingField === 'avatar'}
+                                                />
+                                            </label>
+                                        </div>
+                                        <p className="text-xs text-slate-500">JPG, PNG, WEBP (tối đa 5MB)</p>
+                                    </div>
+                                </div>
+
+                                {/* Video Demo Upload */}
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                                        <Video className="w-4 h-4 inline mr-1" />
+                                        Video giới thiệu dạy học
+                                    </label>
+                                    {videoDemoUrl ? (
+                                        <div className="space-y-2">
+                                            <video src={videoDemoUrl} controls className="w-full max-h-40 rounded-lg bg-black" />
+                                            <GoldButton
+                                                type="button"
+                                                onClick={() => setVideoDemoUrl('')}
+                                                className="text-xs !bg-transparent !bg-none text-red-500 hover:text-red-700"
+                                            >
+                                                Xóa video
+                                            </GoldButton>
+                                        </div>
+                                    ) : (
+                                        <label className="flex flex-col items-center justify-center w-full h-28 border-2 border-dashed border-slate-300 dark:border-slate-600 rounded-lg cursor-pointer hover:border-primary transition-colors">
+                                            {uploadingField === 'video' ? (
+                                                <div className="text-center">
+                                                    <div className="w-32 h-2 bg-slate-200 dark:bg-slate-600 rounded-full overflow-hidden mb-2">
+                                                        <div
+                                                            className="h-full bg-primary rounded-full transition-all"
+                                                            style={{ width: `${uploadProgress.video || 0}%` }}
+                                                        />
+                                                    </div>
+                                                    <span className="text-xs text-primary font-bold">{uploadProgress.video || 0}%</span>
+                                                </div>
+                                            ) : (
+                                                <>
+                                                    <Video className="w-8 h-8 text-slate-400 mb-1" />
+                                                    <span className="text-sm text-slate-500">Chọn video</span>
+                                                    <span className="text-xs text-slate-400">MP4, MOV (tối đa 50MB)</span>
+                                                </>
+                                            )}
+                                            <input
+                                                type="file"
+                                                accept=".mp4,.mov"
+                                                onChange={handleVideoUpload}
+                                                className="hidden"
+                                                disabled={uploadingField === 'video'}
+                                            />
+                                        </label>
+                                    )}
                                 </div>
                             </div>
 
                             <div className="mt-8 flex justify-end gap-4">
-                                <button
+                                <GoldButton
                                     onClick={handleSubmitProfile}
                                     disabled={loading}
-                                    className="flex items-center gap-2 px-8 py-3 bg-primary text-white rounded-lg hover:bg-cyan-700 disabled:opacity-50 font-semibold"
+                                    className="flex items-center gap-2 px-8 py-3 rounded-lg disabled:opacity-50 font-semibold"
                                 >
                                     <Save className="w-5 h-5" />
                                     {loading ? 'Đang gửi...' : 'Gửi hồ sơ'}
-                                </button>
+                                </GoldButton>
                             </div>
                         </div>
                     ) : profile?.verification_status === 'pending' ? (
@@ -619,13 +820,13 @@ export const TeacherDashboard: React.FC = () => {
                             <p className="text-slate-600 dark:text-slate-400 mb-6">
                                 Admin đang xem xét hồ sơ của bạn. Quá trình này thường mất 24-48 giờ.
                             </p>
-                            <button
+                            <GoldButton
                                 onClick={() => setShowProfileForm(true)}
-                                className="px-6 py-2 border border-slate-300 dark:border-slate-600 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700 flex items-center gap-2 mx-auto"
+                                className="px-6 py-2 rounded-lg flex items-center gap-2 mx-auto"
                             >
                                 <Edit2 className="w-4 h-4" />
                                 Chỉnh sửa hồ sơ
-                            </button>
+                            </GoldButton>
                         </div>
                     ) : (
                         /* Approved - Show Dashboard */
@@ -677,13 +878,13 @@ export const TeacherDashboard: React.FC = () => {
                                     <h2 className="text-2xl font-bold text-slate-900 dark:text-white">
                                         Khóa học của tôi
                                     </h2>
-                                    <button
+                                    <GoldButton
                                         onClick={() => setShowCourseModal(true)}
-                                        className="flex items-center gap-2 px-6 py-2 bg-primary text-white rounded-lg hover:bg-cyan-700"
+                                        className="flex items-center gap-2 px-6 py-2 rounded-lg"
                                     >
                                         <Plus className="w-5 h-5" />
                                         Tạo khóa học mới
-                                    </button>
+                                    </GoldButton>
                                 </div>
 
                                 {courses.length === 0 ? (
@@ -721,11 +922,10 @@ export const TeacherDashboard: React.FC = () => {
                                                     </span>
                                                 </div>
                                                 <div className="mt-4 flex gap-2">
-                                                    <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                                                        course.is_online
+                                                    <span className={`px-3 py-1 rounded-full text-xs font-semibold ${course.is_online
                                                             ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300'
                                                             : 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300'
-                                                    }`}>
+                                                        }`}>
                                                         {course.is_online ? 'Online' : 'Offline'}
                                                     </span>
                                                     <span className="px-3 py-1 bg-slate-100 dark:bg-slate-700 rounded-full text-xs font-semibold text-slate-700 dark:text-slate-300">
@@ -874,19 +1074,19 @@ export const TeacherDashboard: React.FC = () => {
                         </div>
 
                         <div className="flex gap-4 mt-6">
-                            <button
+                            <GoldButton
                                 onClick={handleCreateCourse}
                                 disabled={loading}
-                                className="flex-1 px-6 py-3 bg-primary text-white rounded-lg hover:bg-cyan-700 disabled:opacity-50 font-semibold"
+                                className="flex-1 px-6 py-3 rounded-lg disabled:opacity-50 font-semibold"
                             >
                                 {loading ? 'Đang tạo...' : 'Tạo khóa học'}
-                            </button>
-                            <button
+                            </GoldButton>
+                            <GoldButton
                                 onClick={() => setShowCourseModal(false)}
-                                className="px-6 py-3 border border-slate-300 dark:border-slate-600 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700"
+                                className="px-6 py-3 !bg-slate-200 dark:!bg-slate-700 !bg-none text-slate-700 dark:text-slate-300 rounded-lg"
                             >
                                 Hủy
-                            </button>
+                            </GoldButton>
                         </div>
                     </div>
                 </div>

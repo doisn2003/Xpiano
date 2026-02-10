@@ -39,20 +39,28 @@ export interface CreateOrderData {
 
 class OrderService {
     /**
-     * Helper: Calculate rental price
+     * Helper: Calculate rental price (based on price per day)
      */
-    calculateRentalPrice(pricePerHour: number, days: number): number {
-        const basePrice = pricePerHour * 8 * days;
+    calculateRentalPrice(pricePerDay: number, days: number): number {
+        const basePrice = pricePerDay * days;
         if (days >= 8) return Math.round(basePrice * 0.85); // 15% discount
         if (days >= 3) return Math.round(basePrice * 0.90); // 10% discount
         return basePrice;
     }
 
     /**
-     * Helper: Calculate buy price
+     * Helper: Calculate buy price (use explicit price if available, otherwise calculate from pricePerDay)
      */
-    calculateBuyPrice(pricePerHour: number): number {
-        return pricePerHour * 1000;
+    calculateBuyPrice(price?: number, pricePerDay?: number): number {
+        // If piano has explicit price, use it
+        if (price && price > 0) {
+            return price;
+        }
+        // Otherwise, calculate from pricePerDay
+        if (pricePerDay) {
+            return pricePerDay * 100;
+        }
+        return 0;
     }
 
     /**

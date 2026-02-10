@@ -1,13 +1,16 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Star } from 'lucide-react';
+import { GoldButton } from './GoldButton';
+import { Star, Heart } from 'lucide-react';
 import { Product } from '../types';
 
 interface ProductCardProps {
   product: Product;
+  isFavorited?: boolean;
+  onToggleFavorite?: () => void;
 }
 
-export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
+export const ProductCard: React.FC<ProductCardProps> = ({ product, isFavorited, onToggleFavorite }) => {
   const navigate = useNavigate();
 
   return (
@@ -29,9 +32,23 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
       </div>
 
       <div className="p-5 flex-1 flex flex-col">
-        <h3 className="font-display font-semibold text-slate-900 dark:text-white text-lg mb-2 truncate" title={product.name}>
-          {product.name}
-        </h3>
+        <div className="flex justify-between items-start mb-2">
+          <h3 className="font-display font-semibold text-slate-900 dark:text-white text-lg truncate flex-1 pr-2" title={product.name}>
+            {product.name}
+          </h3>
+          {onToggleFavorite && (
+            <button
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                onToggleFavorite();
+              }}
+              className="p-1.5 rounded-full bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors focus:outline-none flex-shrink-0"
+            >
+              <Heart className={`w-5 h-5 ${isFavorited ? 'fill-red-500 text-red-500' : 'text-slate-400'}`} />
+            </button>
+          )}
+        </div>
 
         <div className="flex items-center gap-1.5 mb-4">
           <div className="flex">
@@ -48,6 +65,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
           <p className="text-primary font-bold text-xl">
             {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(product.price)}
           </p>
+          <span className="text-slate-500 text-sm">/ngày</span>
           {product.originalPrice && (
             <p className="text-slate-400 text-sm line-through decoration-1">
               {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(product.originalPrice)}
@@ -56,12 +74,12 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
         </div>
 
         <div className="mt-auto grid grid-cols-2 gap-3">
-          <button className="bg-primary hover:bg-cyan-800 text-white py-2.5 rounded-lg text-sm font-semibold transition-colors shadow-sm hover:shadow-md active:scale-95">
+          <GoldButton className="py-2.5 rounded-lg text-sm font-semibold transition-colors shadow-sm hover:shadow-md active:scale-95">
             Mua
-          </button>
-          <button className="border border-primary text-primary hover:bg-primary/5 dark:hover:bg-primary/20 py-2.5 rounded-lg text-sm font-semibold transition-colors active:scale-95">
+          </GoldButton>
+          <GoldButton className="py-2.5 rounded-lg text-sm font-semibold transition-colors active:scale-95">
             Mượn
-          </button>
+          </GoldButton>
         </div>
       </div>
     </div>

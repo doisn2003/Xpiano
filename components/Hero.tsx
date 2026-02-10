@@ -1,5 +1,6 @@
 import React from 'react';
 import { Smartphone, Bot, ArrowRight, Heart, MessageCircle, Share2, Play, Eye, GraduationCap } from 'lucide-react';
+import { GoldButton } from './GoldButton';
 
 export const Hero: React.FC = () => {
   return (
@@ -12,7 +13,7 @@ export const Hero: React.FC = () => {
 
       <div className="container mx-auto px-4 relative z-10">
         <div className="flex flex-col lg:flex-row items-center justify-center gap-12 lg:gap-20">
-          
+
           {/* Left Content */}
           <div className="w-full lg:w-1/2 text-center lg:text-right">
             <h2 className="text-3xl md:text-5xl font-display font-bold text-slate-900 dark:text-white mb-6 leading-tight">
@@ -28,23 +29,23 @@ export const Hero: React.FC = () => {
                 Trải nghiệm trọn vẹn trên ứng dụng của chúng tôi!
               </p>
               <div className="flex flex-col gap-3">
-                <button className="flex items-center justify-center lg:justify-end gap-3 w-full bg-slate-900 hover:bg-black dark:bg-slate-100 dark:hover:bg-white text-white dark:text-slate-900 py-3 px-6 rounded-xl transition-all active:scale-95 group shadow-md border border-transparent dark:border-slate-200">
+                <GoldButton className="flex items-center justify-center lg:justify-end gap-3 w-full py-3 px-6 rounded-xl transition-all active:scale-95 group shadow-md border border-transparent dark:border-slate-200">
                   <div className="text-right flex flex-col items-center lg:items-end leading-none">
                     <span className="text-[10px] uppercase tracking-wider font-bold opacity-70">Download on</span>
                     <span className="text-lg font-bold mt-1">App Store</span>
                   </div>
                   <Smartphone className="w-8 h-8 group-hover:scale-110 transition-transform" />
-                </button>
-                <button className="flex items-center justify-center lg:justify-end gap-3 w-full bg-slate-900 hover:bg-black dark:bg-slate-100 dark:hover:bg-white text-white dark:text-slate-900 py-3 px-6 rounded-xl transition-all active:scale-95 group shadow-md border border-transparent dark:border-slate-200">
+                </GoldButton>
+                <GoldButton className="flex items-center justify-center lg:justify-end gap-3 w-full py-3 px-6 rounded-xl transition-all active:scale-95 group shadow-md border border-transparent dark:border-slate-200">
                   <div className="text-right flex flex-col items-center lg:items-end leading-none">
                     <span className="text-[10px] uppercase tracking-wider font-bold opacity-70">Get it on</span>
                     <span className="text-lg font-bold mt-1">Google Play</span>
                   </div>
                   <Bot className="w-8 h-8 group-hover:scale-110 transition-transform" />
-                </button>
+                </GoldButton>
               </div>
             </div>
-            
+
             <div className="hidden lg:flex justify-end mt-10">
               <ArrowRight className="text-primary w-10 h-10 animate-bounce" />
             </div>
@@ -54,12 +55,12 @@ export const Hero: React.FC = () => {
           {/* Modified: Wider width and slightly shorter aspect ratio as requested */}
           <div className="w-full lg:w-1/2 flex justify-center lg:justify-start">
             <div className="relative w-full max-w-[420px] shadow-2xl rounded-[2.5rem] border-8 border-white dark:border-slate-700 overflow-hidden bg-black aspect-[9/15] group ring-1 ring-slate-900/5 dark:ring-white/10">
-              <img 
-                src="https://lh3.googleusercontent.com/aida-public/AB6AXuDE7k02uOyr4ACAPewzvCAxvvE6yh4Qizn5dObqOP1-z1GHKmlmaY-oYb5ON73K7f70HLw0qZHS2uXVeqd9ZnbrlFZbSJO91Fha1nn470I8Ex6_kQo2Y9GYSRYlAgr9vvZhXCUIWEKcnI-iLfl9LYlBrBk1r5YeB_SxDymU06Z6IGgP_066cW_kQXpZ6pzQrsqH5WI4FmZPKD1ah3ke1N6qBecZfAtWjUbQS2OU7xJIk32rUSkQhyEPdq7p4NDFx2gYVQPGLibcdFpx" 
-                alt="Playing Piano" 
-                className="w-full h-full object-cover opacity-90 group-hover:scale-105 transition-transform duration-700" 
+              <img
+                src="https://lh3.googleusercontent.com/aida-public/AB6AXuDE7k02uOyr4ACAPewzvCAxvvE6yh4Qizn5dObqOP1-z1GHKmlmaY-oYb5ON73K7f70HLw0qZHS2uXVeqd9ZnbrlFZbSJO91Fha1nn470I8Ex6_kQo2Y9GYSRYlAgr9vvZhXCUIWEKcnI-iLfl9LYlBrBk1r5YeB_SxDymU06Z6IGgP_066cW_kQXpZ6pzQrsqH5WI4FmZPKD1ah3ke1N6qBecZfAtWjUbQS2OU7xJIk32rUSkQhyEPdq7p4NDFx2gYVQPGLibcdFpx"
+                alt="Playing Piano"
+                className="w-full h-full object-cover opacity-90 group-hover:scale-105 transition-transform duration-700"
               />
-              
+
               {/* Phone UI Overlay */}
               <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/80 flex flex-col justify-between p-5">
                 <div className="flex justify-between items-start pt-4">
@@ -71,7 +72,7 @@ export const Hero: React.FC = () => {
                 {/* Interaction Sidebar */}
                 <div className="absolute right-3 bottom-40 flex flex-col gap-5 items-center">
                   <div className="flex flex-col items-center gap-1">
-                    <button className="w-12 h-12 rounded-full bg-black/40 backdrop-blur-md flex items-center justify-center text-white hover:bg-primary/80 transition-colors border border-white/10">
+                    <button className="w-12 h-12 rounded-full bg-black/40 backdrop-blur-md flex items-center justify-center text-white hover:bg-white/20 transition-colors border border-white/10">
                       <Heart className="w-6 h-6 fill-white" />
                     </button>
                     <span className="text-white text-xs font-medium drop-shadow-md">1.2K</span>
@@ -98,14 +99,14 @@ export const Hero: React.FC = () => {
                       Review đàn piano điện Casio mới nhất. Âm thanh cực đỉnh! #piano #music
                     </p>
                   </div>
-                  
+
                   <div className="grid grid-cols-2 gap-3 mt-1">
-                    <button className="bg-primary/90 hover:bg-cyan-700 text-white py-3 rounded-xl text-sm font-bold shadow-lg backdrop-blur-sm transition-all flex items-center justify-center gap-2">
+                    <GoldButton className="py-3 rounded-xl text-sm font-bold shadow-lg backdrop-blur-sm transition-all flex items-center justify-center gap-2">
                       <Eye className="w-4 h-4" /> Xem đàn
-                    </button>
-                    <button className="bg-accent/90 hover:bg-orange-600 text-white py-3 rounded-xl text-sm font-bold shadow-lg backdrop-blur-sm transition-all flex items-center justify-center gap-2">
+                    </GoldButton>
+                    <GoldButton className="py-3 rounded-xl text-sm font-bold shadow-lg backdrop-blur-sm transition-all flex items-center justify-center gap-2">
                       <GraduationCap className="w-4 h-4" /> Học ngay
-                    </button>
+                    </GoldButton>
                   </div>
                 </div>
               </div>

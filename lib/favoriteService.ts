@@ -13,7 +13,8 @@ export interface FavoriteWithPiano extends Favorite {
         name: string;
         image_url: string;
         category: string;
-        price_per_hour: number;
+        price_per_day: number;
+        price?: number;
         rating: number;
     };
 }

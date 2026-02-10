@@ -13,6 +13,7 @@ import { ProfilePage } from './pages/ProfilePage';
 import { AdminDashboard } from './pages/AdminDashboard';
 import { TeacherDashboard } from './pages/TeacherDashboard';
 import { LoginAdmin } from './pages/LoginAdmin';
+import { MarketplacePage } from './pages/MarketplacePage';
 
 function HomePage() {
   return (
@@ -34,6 +35,7 @@ function App() {
         <div className="min-h-screen flex flex-col font-body">
           <Routes>
             <Route path="/" element={<HomePage />} />
+            <Route path="/marketplace" element={<MarketplacePage />} />
             <Route path="/piano/:id" element={<PianoDetailPage />} />
             <Route path="/profile" element={<ProfilePage />} />
             <Route path="/admin" element={<AdminDashboard />} />

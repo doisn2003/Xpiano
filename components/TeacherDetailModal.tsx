@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { X, Check, XCircle, Award, Calendar, Mail, Phone, BookOpen } from 'lucide-react';
+import { X, Check, XCircle, Award, Calendar, Mail, Phone, BookOpen, User, FileImage, Video } from 'lucide-react';
+import { GoldButton } from './GoldButton';
 
 interface TeacherDetailModalProps {
     teacher: any;
@@ -59,16 +60,39 @@ export const TeacherDetailModal: React.FC<TeacherDetailModalProps> = ({
                             {statusText[teacher.verification_status as keyof typeof statusText]}
                         </span>
                     </div>
-                    <button 
-                        onClick={onClose} 
-                        className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
+                    <GoldButton
+                        onClick={onClose}
+                        className="!bg-transparent !bg-none !p-0 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 shadow-none"
                     >
                         <X className="w-6 h-6" />
-                    </button>
+                    </GoldButton>
                 </div>
 
                 {/* Content */}
                 <div className="p-6 space-y-6">
+                    {/* Avatar Section */}
+                    <div className="flex items-center gap-6 pb-6 border-b border-slate-200 dark:border-slate-700">
+                        <div className="w-24 h-24 rounded-full bg-slate-200 dark:bg-slate-700 overflow-hidden flex items-center justify-center">
+                            {teacher.avatar_url ? (
+                                <img
+                                    src={teacher.avatar_url}
+                                    alt={teacher.full_name}
+                                    className="w-full h-full object-cover"
+                                />
+                            ) : (
+                                <User className="w-12 h-12 text-slate-400" />
+                            )}
+                        </div>
+                        <div>
+                            <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-1">
+                                {teacher.full_name || 'Ch\u01b0a c\u1eadp nh\u1eadt'}
+                            </h3>
+                            <p className="text-sm text-slate-600 dark:text-slate-400">
+                                {teacher.email}
+                            </p>
+                        </div>
+                    </div>
+
                     {/* Basic Info */}
                     <div className="grid md:grid-cols-2 gap-6">
                         <div className="space-y-4">
@@ -157,7 +181,7 @@ export const TeacherDetailModal: React.FC<TeacherDetailModalProps> = ({
                             </label>
                             <div className="grid md:grid-cols-2 gap-3">
                                 {teacher.certificates.map((cert: any, idx: number) => (
-                                    <div 
+                                    <div
                                         key={idx}
                                         className="p-4 border border-slate-200 dark:border-slate-700 rounded-lg bg-slate-50 dark:bg-slate-700/50"
                                     >
@@ -173,28 +197,73 @@ export const TeacherDetailModal: React.FC<TeacherDetailModalProps> = ({
                         </div>
                     )}
 
-                    {/* Certificate Images - Placeholder for future */}
+                    {/* Certificate Description */}
+                    {teacher.certificates_description && (
+                        <div>
+                            <label className="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2 block">
+                                Mô tả Chứng chỉ/Bằng cấp
+                            </label>
+                            <p className="text-base text-slate-700 dark:text-slate-300 bg-slate-50 dark:bg-slate-700/50 p-4 rounded-lg">
+                                {teacher.certificates_description}
+                            </p>
+                        </div>
+                    )}
+
+                    {/* Certificate Images */}
                     <div>
-                        <label className="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-3 block">
+                        <label className="flex items-center gap-2 text-sm font-semibold text-slate-700 dark:text-slate-300 mb-3">
+                            <FileImage className="w-4 h-4" />
                             Ảnh chứng chỉ
                         </label>
-                        <div className="bg-slate-50 dark:bg-slate-700/50 border-2 border-dashed border-slate-300 dark:border-slate-600 rounded-lg p-8 text-center">
-                            <p className="text-slate-500 dark:text-slate-400">
-                                Tính năng đang phát triển - sẽ hiển thị ảnh chứng chỉ tại đây
-                            </p>
-                        </div>
+                        {teacher.certificate_urls && teacher.certificate_urls.length > 0 ? (
+                            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+                                {teacher.certificate_urls.map((url: string, idx: number) => (
+                                    <div key={idx} className="relative group rounded-lg overflow-hidden border border-slate-300 dark:border-slate-600">
+                                        <img
+                                            src={url}
+                                            alt={`Chứng chỉ ${idx + 1}`}
+                                            className="w-full h-32 object-cover cursor-pointer hover:scale-110 transition-transform"
+                                            onClick={() => window.open(url, '_blank')}
+                                        />
+                                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors flex items-center justify-center">
+                                            <span className="text-white text-xs opacity-0 group-hover:opacity-100 transition-opacity">
+                                                Xem lớn
+                                            </span>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        ) : (
+                            <div className="bg-slate-50 dark:bg-slate-700/50 border-2 border-dashed border-slate-300 dark:border-slate-600 rounded-lg p-6 text-center">
+                                <FileImage className="w-8 h-8 text-slate-400 mx-auto mb-2" />
+                                <p className="text-sm text-slate-500 dark:text-slate-400">
+                                    Chưa upload ảnh chứng chỉ
+                                </p>
+                            </div>
+                        )}
                     </div>
 
-                    {/* Demo Videos - Placeholder for future */}
+                    {/* Demo Video */}
                     <div>
-                        <label className="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-3 block">
+                        <label className="flex items-center gap-2 text-sm font-semibold text-slate-700 dark:text-slate-300 mb-3">
+                            <Video className="w-4 h-4" />
                             Video demo giảng dạy
                         </label>
-                        <div className="bg-slate-50 dark:bg-slate-700/50 border-2 border-dashed border-slate-300 dark:border-slate-600 rounded-lg p-8 text-center">
-                            <p className="text-slate-500 dark:text-slate-400">
-                                Tính năng đang phát triển - sẽ hiển thị video demo tại đây
-                            </p>
-                        </div>
+                        {teacher.video_demo_url ? (
+                            <video
+                                src={teacher.video_demo_url}
+                                controls
+                                className="w-full rounded-lg bg-black"
+                                style={{ maxHeight: '400px' }}
+                            />
+                        ) : (
+                            <div className="bg-slate-50 dark:bg-slate-700/50 border-2 border-dashed border-slate-300 dark:border-slate-600 rounded-lg p-6 text-center">
+                                <Video className="w-8 h-8 text-slate-400 mx-auto mb-2" />
+                                <p className="text-sm text-slate-500 dark:text-slate-400">
+                                    Chưa upload video demo
+                                </p>
+                            </div>
+                        )}
                     </div>
 
                     {/* Rejection Reason */}
@@ -224,28 +293,28 @@ export const TeacherDetailModal: React.FC<TeacherDetailModalProps> = ({
                     <div className="sticky bottom-0 bg-slate-50 dark:bg-slate-900 border-t border-slate-200 dark:border-slate-700 px-6 py-4">
                         {!showRejectInput ? (
                             <div className="flex gap-3">
-                                <button
+                                <GoldButton
                                     onClick={handleApprove}
                                     disabled={loading}
-                                    className="flex-1 flex items-center justify-center gap-2 px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-semibold"
+                                    className="flex-1 flex items-center justify-center gap-2 px-6 py-3 !bg-green-600 !bg-none text-white rounded-lg hover:!bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed font-semibold"
                                 >
                                     <Check className="w-5 h-5" />
                                     Phê duyệt hồ sơ
-                                </button>
-                                <button
+                                </GoldButton>
+                                <GoldButton
                                     onClick={() => setShowRejectInput(true)}
                                     disabled={loading}
-                                    className="flex-1 flex items-center justify-center gap-2 px-6 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-semibold"
+                                    className="flex-1 flex items-center justify-center gap-2 px-6 py-3 !bg-red-600 !bg-none text-white rounded-lg hover:!bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed font-semibold"
                                 >
                                     <XCircle className="w-5 h-5" />
                                     Từ chối hồ sơ
-                                </button>
-                                <button
+                                </GoldButton>
+                                <GoldButton
                                     onClick={onClose}
-                                    className="px-6 py-3 bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-lg hover:bg-slate-300 dark:hover:bg-slate-600 transition-colors font-semibold"
+                                    className="px-6 py-3 !bg-slate-200 !bg-none dark:!bg-slate-700 text-slate-700 dark:text-slate-300 rounded-lg hover:!bg-slate-300 dark:hover:!bg-slate-600 font-semibold"
                                 >
                                     Đóng
-                                </button>
+                                </GoldButton>
                             </div>
                         ) : (
                             <div className="space-y-3">
@@ -258,22 +327,22 @@ export const TeacherDetailModal: React.FC<TeacherDetailModalProps> = ({
                                     autoFocus
                                 />
                                 <div className="flex gap-3">
-                                    <button
+                                    <GoldButton
                                         onClick={handleReject}
                                         disabled={loading || !rejectReason.trim()}
-                                        className="flex-1 px-6 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-semibold"
+                                        className="flex-1 px-6 py-3 !bg-red-600 !bg-none text-white rounded-lg hover:!bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed font-semibold"
                                     >
                                         Xác nhận từ chối
-                                    </button>
-                                    <button
+                                    </GoldButton>
+                                    <GoldButton
                                         onClick={() => {
                                             setShowRejectInput(false);
                                             setRejectReason('');
                                         }}
-                                        className="px-6 py-3 bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-lg hover:bg-slate-300 dark:hover:bg-slate-600 transition-colors font-semibold"
+                                        className="px-6 py-3 !bg-slate-200 !bg-none dark:!bg-slate-700 text-slate-700 dark:text-slate-300 rounded-lg hover:!bg-slate-300 dark:hover:!bg-slate-600 font-semibold"
                                     >
                                         Hủy
-                                    </button>
+                                    </GoldButton>
                                 </div>
                             </div>
                         )}
@@ -282,12 +351,12 @@ export const TeacherDetailModal: React.FC<TeacherDetailModalProps> = ({
 
                 {teacher.verification_status !== 'pending' && (
                     <div className="sticky bottom-0 bg-slate-50 dark:bg-slate-900 border-t border-slate-200 dark:border-slate-700 px-6 py-4">
-                        <button
+                        <GoldButton
                             onClick={onClose}
-                            className="w-full px-6 py-3 bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-lg hover:bg-slate-300 dark:hover:bg-slate-600 transition-colors font-semibold"
+                            className="w-full px-6 py-3 !bg-slate-200 !bg-none dark:!bg-slate-700 text-slate-700 dark:text-slate-300 rounded-lg hover:!bg-slate-300 dark:hover:!bg-slate-600 font-semibold"
                         >
                             Đóng
-                        </button>
+                        </GoldButton>
                     </div>
                 )}
             </div>
