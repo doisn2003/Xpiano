@@ -2,11 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
     LayoutDashboard, Package, ShoppingBag, Users, Plus, Edit2, Trash2,
-    Check, X, Search, Filter, TrendingUp
+    Check, X, Search, Filter, TrendingUp, GraduationCap, AlertCircle, CheckCircle, XCircle
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { Header } from '../components/Header';
 import { Footer } from '../components/Footer';
+import { TeacherDetailModal } from '../components/TeacherDetailModal';
 import pianoService, { Piano } from '../lib/pianoService';
 import orderService, { OrderWithDetails } from '../lib/orderService';
 import userService from '../lib/userService';
@@ -15,12 +16,13 @@ export const AdminDashboard: React.FC = () => {
     const { user, isAuthenticated, isLoading: authLoading } = useAuth();
     const navigate = useNavigate();
 
-    const [activeTab, setActiveTab] = useState<'overview' | 'pianos' | 'orders' | 'users'>('overview');
+    const [activeTab, setActiveTab] = useState<'overview' | 'pianos' | 'orders' | 'users' | 'teachers'>('overview');
 
     // Data
     const [pianos, setPianos] = useState<Piano[]>([]);
     const [orders, setOrders] = useState<OrderWithDetails[]>([]);
     const [users, setUsers] = useState<any[]>([]);
+    const [teachers, setTeachers] = useState<any[]>([]);
     const [stats, setStats] = useState<any>(null);
 
     // Piano CRUD
@@ -42,6 +44,10 @@ export const AdminDashboard: React.FC = () => {
     const [selectedOrder, setSelectedOrder] = useState<OrderWithDetails | null>(null);
     const [orderNotes, setOrderNotes] = useState('');
 
+    // Teacher management
+    const [selectedTeacher, setSelectedTeacher] = useState<any | null>(null);
+    const [showTeacherModal, setShowTeacherModal] = useState(false);
+
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
@@ -61,10 +67,11 @@ export const AdminDashboard: React.FC = () => {
     const loadData = async () => {
         try {
             setLoading(true);
-            const [pianosData, ordersData, usersData, pianoStats, orderStats] = await Promise.all([
+            const [pianosData, ordersData, usersData, teachersData, pianoStats, orderStats] = await Promise.all([
                 pianoService.getAll(),
                 orderService.getAllOrders(),
                 userService.getAllUsers(),
+                userService.getTeacherProfiles(),
                 pianoService.getStats(),
                 orderService.getOrderStats(),
             ]);
@@ -72,7 +79,60 @@ export const AdminDashboard: React.FC = () => {
             setPianos(pianosData);
             setOrders(ordersData);
             setUsers(usersData);
+            setTeachers(teachersData);
             setStats({ ...pianoStats, ...orderStats });
+        } catch (err: any) {
+            setError(err.message);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleApproveTeacher = async (id: string) => {
+        if (!confirm('Xác nhận phê duyệt hồ sơ giáo viên này?')) return;
+
+        try {
+            setLoading(true);
+            await userService.approveTeacher(id);
+            setSuccess('Đã phê duyệt hồ sơ giáo viên');
+            await loadData();
+        } catch (err: any) {
+            setError(err.message);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleRejectTeacher = async (id: string, reason: string) => {
+        try {
+            setLoading(true);
+            await userService.rejectTeacher(id, reason);
+            setSuccess('Đã từ chối hồ sơ giáo viên. Giáo viên có thể chỉnh sửa và nộp lại.');
+            setShowTeacherModal(false);
+            setSelectedTeacher(null);
+            await loadData();
+        } catch (err: any) {
+            setError(err.message);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleRevokeTeacher = async (id: string) => {
+        const reason = prompt('⚠️ HỦY HỢP ĐỒNG GIÁO VIÊN\n\nGiáo viên sẽ không thể mở lớp học cho đến khi nộp lại hồ sơ và được phê duyệt.\n\nNhập lý do hủy hợp đồng:');
+        
+        if (!reason || reason.trim() === '') {
+            alert('Vui lòng nhập lý do hủy hợp đồng');
+            return;
+        }
+
+        if (!confirm(`Xác nhận hủy hợp đồng?\n\nGiáo viên sẽ:\n- Không được mở lớp học mới\n- Phải nộp lại hồ sơ để được duyệt lại\n- GIỮ NGUYÊN tài khoản và role teacher`)) return;
+
+        try {
+            setLoading(true);
+            await userService.revokeTeacher(id, reason.trim());
+            setSuccess('Đã hủy hợp đồng. Giáo viên có thể nộp lại hồ sơ sau khi chỉnh sửa.');
+            await loadData();
         } catch (err: any) {
             setError(err.message);
         } finally {
@@ -263,6 +323,7 @@ export const AdminDashboard: React.FC = () => {
                             { id: 'pianos', label: 'Quản lý Pianos', icon: Package },
                             { id: 'orders', label: 'Đơn hàng', icon: ShoppingBag },
                             { id: 'users', label: 'Người dùng', icon: Users },
+                            { id: 'teachers', label: 'Giáo viên', icon: GraduationCap },
                         ].map(({ id, label, icon: Icon }) => (
                             <button
                                 key={id}
@@ -477,7 +538,7 @@ export const AdminDashboard: React.FC = () => {
                                                     <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700 dark:text-slate-300">Actions</th>
                                                 </tr>
                                             </thead>
-                                            <tbody className="divide-y divide-slate-200 dark:divide-slate-700">
+                                            <tbody className="divide-y divide-slice-200 dark:divide-slate-700">
                                                 {users.map((u) => (
                                                     <tr key={u.id} className="hover:bg-slate-50 dark:hover:bg-slate-700/50">
                                                         <td className="px-4 py-3 font-medium text-slate-900 dark:text-white">{u.full_name}</td>
@@ -505,6 +566,115 @@ export const AdminDashboard: React.FC = () => {
                                 )}
                             </div>
                         )}
+
+                        {/* Teachers Tab */}
+                        {activeTab === 'teachers' && (
+                            <div>
+                                <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-6">
+                                    Quản lý Giáo viên ({teachers.length})
+                                </h2>
+
+                                {loading ? (
+                                    <div className="text-center py-8">
+                                        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+                                    </div>
+                                ) : teachers.length === 0 ? (
+                                    <div className="text-center py-12 text-slate-500 dark:text-slate-400">
+                                        Không có hồ sơ giáo viên nào
+                                    </div>
+                                ) : (
+                                    <div className="overflow-x-auto">
+                                        <table className="w-full">
+                                            <thead className="bg-slate-100 dark:bg-slate-700">
+                                                <tr>
+                                                    <th className="px-6 py-4 text-left text-sm font-semibold text-slate-700 dark:text-slate-300">Giáo viên</th>
+                                                    <th className="px-6 py-4 text-left text-sm font-semibold text-slate-700 dark:text-slate-300">Kinh nghiệm & Kỹ năng</th>
+                                                    <th className="px-6 py-4 text-left text-sm font-semibold text-slate-700 dark:text-slate-300">Trạng thái</th>
+                                                    <th className="px-6 py-4 text-right text-sm font-semibold text-slate-700 dark:text-slate-300">Hành động</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody className="divide-y divide-slate-200 dark:divide-slate-700">
+                                                {teachers.map((teacher: any) => {
+                                                    const isApproved = teacher.verification_status === 'approved';
+                                                    const isPending = teacher.verification_status === 'pending';
+                                                    
+                                                    return (
+                                                        <tr 
+                                                            key={teacher.id} 
+                                                            className="hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors cursor-pointer"
+                                                            onClick={() => {
+                                                                setSelectedTeacher(teacher);
+                                                                setShowTeacherModal(true);
+                                                            }}
+                                                        >
+                                                            <td className="px-6 py-4">
+                                                                <div className="flex items-center gap-3">
+                                                                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary to-cyan-600 flex items-center justify-center text-white font-bold">
+                                                                        {teacher.full_name?.charAt(0).toUpperCase() || 'G'}
+                                                                    </div>
+                                                                    <div>
+                                                                        <p className="font-semibold text-slate-900 dark:text-white">
+                                                                            {teacher.full_name || 'Chưa cập nhật'}
+                                                                        </p>
+                                                                        <p className="text-xs text-slate-500 dark:text-slate-400">
+                                                                            {teacher.email}
+                                                                        </p>
+                                                                    </div>
+                                                                </div>
+                                                            </td>
+                                                            <td className="px-6 py-4">
+                                                                <div>
+                                                                    <p className="font-semibold text-slate-800 dark:text-slate-200">
+                                                                        {teacher.years_experience || 0} năm kinh nghiệm
+                                                                    </p>
+                                                                    <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+                                                                        {teacher.specializations || 'Chưa cập nhật'}
+                                                                    </p>
+                                                                </div>
+                                                            </td>
+                                                            <td className="px-6 py-4">
+                                                                {isApproved ? (
+                                                                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
+                                                                        <span className="w-1.5 h-1.5 bg-green-600 rounded-full mr-1.5"></span>
+                                                                        Đang hoạt động
+                                                                    </span>
+                                                                ) : isPending ? (
+                                                                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200">
+                                                                        <span className="w-1.5 h-1.5 bg-yellow-500 rounded-full mr-1.5"></span>
+                                                                        Chờ duyệt
+                                                                    </span>
+                                                                ) : (
+                                                                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200">
+                                                                        <span className="w-1.5 h-1.5 bg-red-600 rounded-full mr-1.5"></span>
+                                                                        Từ chối
+                                                                    </span>
+                                                                )}
+                                                            </td>
+                                                            <td className="px-6 py-4 text-right">
+                                                                <button
+                                                                    onClick={(e) => {
+                                                                        e.stopPropagation();
+                                                                        handleRevokeTeacher(teacher.id);
+                                                                    }}
+                                                                    disabled={!isApproved}
+                                                                    className={`text-sm font-medium px-3 py-1.5 rounded border transition-colors ${
+                                                                        isApproved
+                                                                            ? 'text-red-600 bg-red-50 border-red-100 hover:bg-red-100 dark:text-red-400 dark:bg-red-900/20 dark:border-red-900/50 dark:hover:bg-red-900/40'
+                                                                            : 'text-slate-400 bg-slate-100 border-slate-200 cursor-not-allowed opacity-60 dark:text-slate-600 dark:bg-slate-800 dark:border-slate-700'
+                                                                    }`}
+                                                                >
+                                                                    Hủy hợp đồng
+                                                                </button>
+                                                            </td>
+                                                        </tr>
+                                                    );
+                                                })}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                )}
+                            </div>
+                        )}
                     </div>
                 </div>
 
@@ -520,6 +690,24 @@ export const AdminDashboard: React.FC = () => {
                         onFeatureInputChange={setFeatureInput}
                         onAddFeature={addFeature}
                         onRemoveFeature={removeFeature}
+                        loading={loading}
+                    />
+                )}
+
+                {/* Teacher Detail Modal */}
+                {showTeacherModal && selectedTeacher && (
+                    <TeacherDetailModal
+                        teacher={selectedTeacher}
+                        onClose={() => {
+                            setShowTeacherModal(false);
+                            setSelectedTeacher(null);
+                        }}
+                        onApprove={async (id) => {
+                            await handleApproveTeacher(id);
+                            setShowTeacherModal(false);
+                            setSelectedTeacher(null);
+                        }}
+                        onReject={handleRejectTeacher}
                         loading={loading}
                     />
                 )}

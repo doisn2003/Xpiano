@@ -116,13 +116,47 @@ export const TeacherDashboard: React.FC = () => {
             setError('');
             setSuccess('');
 
-            if (!profileForm.full_name || profileForm.specializations.length === 0 || !profileForm.bio) {
-                setError('Vui lòng điền đầy đủ thông tin bắt buộc');
+            // Debug logging
+            console.log('🔍 Profile form submission:', {
+                full_name: profileForm.full_name,
+                full_name_length: profileForm.full_name?.length,
+                specializations: profileForm.specializations,
+                specializations_length: profileForm.specializations?.length,
+                bio: profileForm.bio,
+                bio_length: profileForm.bio?.length,
+                years_experience: profileForm.years_experience
+            });
+
+            // Validation with trim
+            const fullName = profileForm.full_name?.trim();
+            const bio = profileForm.bio?.trim();
+
+            if (!fullName || fullName.length === 0) {
+                setError('Vui lòng nhập họ và tên');
+                return;
+            }
+
+            if (!profileForm.specializations || profileForm.specializations.length === 0) {
+                setError('Vui lòng thêm ít nhất một chuyên môn');
+                return;
+            }
+
+            if (!bio || bio.length === 0) {
+                setError('Vui lòng nhập giới thiệu bản thân');
+                return;
+            }
+
+            if (!profileForm.years_experience || profileForm.years_experience < 0) {
+                setError('Vui lòng nhập số năm kinh nghiệm hợp lệ');
                 return;
             }
 
             setLoading(true);
-            const result = await teacherService.submitProfile(profileForm);
+            const result = await teacherService.submitProfile({
+                ...profileForm,
+                full_name: fullName,
+                bio: bio
+            });
             setSuccess(result.message);
             setShowProfileForm(false);
             await loadData();
