@@ -434,7 +434,7 @@ export const ProfilePage: React.FC = () => {
                                                     name: fav.piano.name,
                                                     rating: fav.piano.rating,
                                                     reviews: 0, // Mock or fetch if available
-                                                    price: fav.piano.price_per_hour,
+                                                    price: fav.piano.price_per_day,
                                                     image: fav.piano.image_url,
                                                     category: fav.piano.category,
                                                     description: '', // Optional

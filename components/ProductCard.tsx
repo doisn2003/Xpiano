@@ -65,6 +65,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, isFavorited, 
           <p className="text-primary font-bold text-xl">
             {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(product.price)}
           </p>
+          <span className="text-slate-500 text-sm">/ngày</span>
           {product.originalPrice && (
             <p className="text-slate-400 text-sm line-through decoration-1">
               {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(product.originalPrice)}

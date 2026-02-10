@@ -5,7 +5,8 @@ export interface Piano {
     name: string;
     image_url: string;
     category: string;
-    price_per_hour: number;
+    price_per_day: number;
+    price?: number; // Giá bán (nullable - nếu chỉ cho thuê)
     rating: number;
     reviews_count: number;
     description: string;

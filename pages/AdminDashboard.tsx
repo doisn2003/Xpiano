@@ -35,7 +35,8 @@ export const AdminDashboard: React.FC = () => {
         name: '',
         image_url: '',
         category: 'Grand',
-        price_per_hour: 0,
+        price_per_day: 0,
+        price: 0,
         rating: 5.0,
         reviews_count: 0,
         description: '',
@@ -178,7 +179,8 @@ export const AdminDashboard: React.FC = () => {
                 name: piano.name,
                 image_url: piano.image_url,
                 category: piano.category,
-                price_per_hour: piano.price_per_hour,
+                price_per_day: piano.price_per_day,
+                price: piano.price || 0,
                 rating: piano.rating,
                 reviews_count: piano.reviews_count,
                 description: piano.description,
@@ -190,7 +192,8 @@ export const AdminDashboard: React.FC = () => {
                 name: '',
                 image_url: '',
                 category: 'Grand',
-                price_per_hour: 0,
+                price_per_day: 0,
+                price: 0,
                 rating: 5.0,
                 reviews_count: 0,
                 description: '',
@@ -482,7 +485,7 @@ export const AdminDashboard: React.FC = () => {
                                                         </td>
                                                         <td className="px-4 py-3 text-slate-600 dark:text-slate-400">{piano.category}</td>
                                                         <td className="px-4 py-3 text-slate-900 dark:text-white font-medium">
-                                                            {new Intl.NumberFormat('vi-VN').format(piano.price_per_hour)}đ
+                                                            {new Intl.NumberFormat('vi-VN').format(piano.price_per_day)}đ/ngày
                                                         </td>
                                                         <td className="px-4 py-3 text-yellow-600">⭐ {piano.rating}</td>
                                                         <td className="px-4 py-3">
@@ -915,11 +918,22 @@ const PianoModal: React.FC<any> = ({
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Giá/giờ (VND)</label>
+                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Giá thuê/ngày (VND)</label>
                         <input
                             type="number"
-                            value={piano.price_per_hour}
-                            onChange={(e) => onChange({ ...piano, price_per_hour: parseInt(e.target.value) })}
+                            value={piano.price_per_day}
+                            onChange={(e) => onChange({ ...piano, price_per_day: parseInt(e.target.value) })}
+                            className="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white"
+                        />
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Giá bán (Để trống nếu chỉ cho thuê) (VND)</label>
+                        <input
+                            type="number"
+                            value={piano.price || 0}
+                            onChange={(e) => onChange({ ...piano, price: parseInt(e.target.value) || 0 })}
+                            placeholder="Nếu chỉ cho thuê, để trống hoặc 0"
                             className="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white"
                         />
                     </div>

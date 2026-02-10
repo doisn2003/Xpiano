@@ -89,7 +89,7 @@ export const PianoDetailPage: React.FC = () => {
         const days = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
 
         if (days < 1) return 0;
-        return orderService.calculateRentalPrice(piano.price_per_hour, days);
+        return orderService.calculateRentalPrice(piano.price_per_day, days);
     };
 
     const getRentalDays = () => {
@@ -157,7 +157,7 @@ export const PianoDetailPage: React.FC = () => {
         );
     }
 
-    const buyPrice = orderService.calculateBuyPrice(piano.price_per_hour);
+    const buyPrice = orderService.calculateBuyPrice(piano.price, piano.price_per_day);
 
     return (
         <div className="min-h-screen flex flex-col">
@@ -256,17 +256,19 @@ export const PianoDetailPage: React.FC = () => {
                                     <Clock className="w-5 h-5 text-primary" />
                                     <span className="text-sm text-slate-600 dark:text-slate-400">Giá thuê:</span>
                                     <span className="text-2xl font-bold text-primary">
-                                        {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(piano.price_per_hour)}
+                                        {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(piano.price_per_day)}
                                     </span>
-                                    <span className="text-slate-500">/giờ</span>
+                                    <span className="text-slate-500">/ngày</span>
                                 </div>
-                                <div className="flex items-baseline gap-2">
-                                    <ShoppingCart className="w-5 h-5 text-green-600" />
-                                    <span className="text-sm text-slate-600 dark:text-slate-400">Giá mua:</span>
-                                    <span className="text-2xl font-bold text-green-600">
-                                        {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(buyPrice)}
-                                    </span>
-                                </div>
+                                {(piano.price && piano.price > 0) && (
+                                    <div className="flex items-baseline gap-2">
+                                        <ShoppingCart className="w-5 h-5 text-green-600" />
+                                        <span className="text-sm text-slate-600 dark:text-slate-400">Giá mua:</span>
+                                        <span className="text-2xl font-bold text-green-600">
+                                            {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(piano.price)}
+                                        </span>
+                                    </div>
+                                )}
                             </div>
 
                             {/* Action Buttons */}

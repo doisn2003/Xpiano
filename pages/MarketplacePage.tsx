@@ -66,7 +66,7 @@ export const MarketplacePage: React.FC = () => {
 
             // 3. Price Range (Using Buy Price for 0-100M range)
             // If we used rent price, 100M would be irrelevant.
-            const buyPrice = orderService.calculateBuyPrice(piano.price_per_hour);
+            const buyPrice = orderService.calculateBuyPrice(piano.price, piano.price_per_day);
             if (buyPrice < filters.minPrice || buyPrice > filters.maxPrice) {
                 return false;
             }
@@ -133,7 +133,7 @@ export const MarketplacePage: React.FC = () => {
         name: piano.name,
         rating: piano.rating,
         reviews: piano.reviews_count,
-        price: piano.price_per_hour,
+        price: piano.price_per_day,
         image: piano.image_url,
         category: piano.category,
         description: piano.description,
