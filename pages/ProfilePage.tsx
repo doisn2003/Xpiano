@@ -10,7 +10,7 @@ import orderService, { OrderWithDetails } from '../lib/orderService';
 import userService from '../lib/userService';
 
 export const ProfilePage: React.FC = () => {
-    const { user, isAuthenticated, refreshUser } = useAuth();
+    const { user, isAuthenticated, isLoading: authLoading, refreshUser } = useAuth();
     const navigate = useNavigate();
 
     const [activeTab, setActiveTab] = useState<'info' | 'favorites' | 'orders' | 'rentals'>('info');
@@ -33,6 +33,9 @@ export const ProfilePage: React.FC = () => {
     const [success, setSuccess] = useState('');
 
     useEffect(() => {
+        // Wait for auth to finish loading before checking authentication
+        if (authLoading) return;
+
         if (!isAuthenticated) {
             navigate('/login');
             return;
@@ -44,7 +47,7 @@ export const ProfilePage: React.FC = () => {
         }
 
         loadData();
-    }, [isAuthenticated, user]);
+    }, [authLoading, isAuthenticated, user]);
 
     const loadData = async () => {
         try {
@@ -153,6 +156,22 @@ export const ProfilePage: React.FC = () => {
             </span>
         );
     };
+
+    // Show loading state while checking authentication
+    if (authLoading) {
+        return (
+            <div className="min-h-screen flex flex-col bg-slate-50 dark:bg-slate-900">
+                <Header />
+                <main className="flex-grow flex items-center justify-center">
+                    <div className="text-center">
+                        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+                        <p className="text-slate-600 dark:text-slate-400">Đang tải...</p>
+                    </div>
+                </main>
+                <Footer />
+            </div>
+        );
+    }
 
     if (!user) return null;
 
@@ -270,8 +289,15 @@ export const ProfilePage: React.FC = () => {
                                         <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
                                             Vai trò
                                         </label>
-                                        <p className="text-slate-900 dark:text-white font-medium capitalize">
-                                            {user.role === 'admin' ? 'Quản trị viên' : user.role === 'teacher' ? 'Giáo viên' : 'Người dùng'}
+                                        <p className="text-slate-900 dark:text-white font-medium">
+                                            {(() => {
+                                                console.log('🔍 DEBUG ProfilePage - user.role:', user.role, typeof user.role);
+                                                const role = user.role?.toLowerCase().trim();
+                                                if (role === 'admin') return 'Quản trị viên';
+                                                if (role === 'teacher') return 'Giáo viên';
+                                                if (role === 'warehouse_owner') return 'Chủ kho đàn';
+                                                return 'Người dùng';
+                                            })()}
                                         </p>
                                     </div>
                                 </div>

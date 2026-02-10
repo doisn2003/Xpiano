@@ -11,6 +11,7 @@ import { ForgotPasswordPage } from './pages/ForgotPasswordPage';
 import { PianoDetailPage } from './pages/PianoDetailPage';
 import { ProfilePage } from './pages/ProfilePage';
 import { AdminDashboard } from './pages/AdminDashboard';
+import { TeacherDashboard } from './pages/TeacherDashboard';
 import { LoginAdmin } from './pages/LoginAdmin';
 
 function HomePage() {
@@ -36,6 +37,7 @@ function App() {
             <Route path="/piano/:id" element={<PianoDetailPage />} />
             <Route path="/profile" element={<ProfilePage />} />
             <Route path="/admin" element={<AdminDashboard />} />
+            <Route path="/teacher-dashboard" element={<TeacherDashboard />} />
             <Route path="/login" element={<LoginPage />} />
             <Route path="/register" element={<RegisterPage />} />
             <Route path="/forgot-password" element={<ForgotPasswordPage />} />

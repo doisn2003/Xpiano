@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Role API</title>
+</head>
+<body>
+    <h1>Debug Role Issue</h1>
+    <p>Email: samngocdoi.sss@gmail.com</p>
+    <div id="result"></div>
+    
+    <script>
+        // Replace with your actual API URL and token
+        const API_URL = 'http://localhost:5000/api';
+        const token = prompt('Nhập token của bạn (lấy từ localStorage):');
+        
+        fetch(`${API_URL}/auth/me`, {
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        })
+        .then(res => res.json())
+        .then(data => {
+            document.getElementById('result').innerHTML = `
+                <h3>API Response:</h3>
+                <pre>${JSON.stringify(data, null, 2)}</pre>
+                <h3>Role field:</h3>
+                <p>user.role = "${data.data?.role}"</p>
+                <p>Type: ${typeof data.data?.role}</p>
+            `;
+        })
+        .catch(err => {
+            document.getElementById('result').innerHTML = `<p style="color: red">Error: ${err.message}</p>`;
+        });
+    </script>
+</body>
+</html>

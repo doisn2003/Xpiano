@@ -12,7 +12,7 @@ import orderService, { OrderWithDetails } from '../lib/orderService';
 import userService from '../lib/userService';
 
 export const AdminDashboard: React.FC = () => {
-    const { user, isAuthenticated } = useAuth();
+    const { user, isAuthenticated, isLoading: authLoading } = useAuth();
     const navigate = useNavigate();
 
     const [activeTab, setActiveTab] = useState<'overview' | 'pianos' | 'orders' | 'users'>('overview');
@@ -47,13 +47,16 @@ export const AdminDashboard: React.FC = () => {
     const [success, setSuccess] = useState('');
 
     useEffect(() => {
+        // Wait for auth to finish loading before checking authentication
+        if (authLoading) return;
+
         if (!isAuthenticated || user?.role !== 'admin') {
             navigate('/');
             return;
         }
 
         loadData();
-    }, [isAuthenticated, user]);
+    }, [authLoading, isAuthenticated, user]);
 
     const loadData = async () => {
         try {
@@ -210,6 +213,22 @@ export const AdminDashboard: React.FC = () => {
             setLoading(false);
         }
     };
+
+    // Show loading state while checking authentication
+    if (authLoading) {
+        return (
+            <div className="min-h-screen flex flex-col bg-slate-50 dark:bg-slate-900">
+                <Header />
+                <main className="flex-grow flex items-center justify-center">
+                    <div className="text-center">
+                        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+                        <p className="text-slate-600 dark:text-slate-400">Đang tải...</p>
+                    </div>
+                </main>
+                <Footer />
+            </div>
+        );
+    }
 
     if (!user || user.role !== 'admin') return null;
 
