@@ -2,12 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
     GraduationCap, BookOpen, Users, DollarSign, Plus, Calendar,
-    Clock, MapPin, CheckCircle, XCircle, AlertCircle, Upload, Save, Edit2
+    Clock, MapPin, CheckCircle, XCircle, AlertCircle, Upload, Save, Edit2,
+    Camera, Video, FileImage
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { Header } from '../components/Header';
 import { Footer } from '../components/Footer';
 import teacherService, { TeacherProfile, Course, TeacherStats } from '../lib/teacherService';
+import uploadService from '../lib/uploadService';
 
 export const TeacherDashboard: React.FC = () => {
     const { user, isAuthenticated, isLoading: authLoading } = useAuth();
@@ -43,6 +45,13 @@ export const TeacherDashboard: React.FC = () => {
     });
     const [specializationInput, setSpecializationInput] = useState('');
     const [locationInput, setLocationInput] = useState('');
+
+    // File upload state
+    const [avatarUrl, setAvatarUrl] = useState('');
+    const [videoDemoUrl, setVideoDemoUrl] = useState('');
+    const [certificateUrls, setCertificateUrls] = useState<string[]>([]);
+    const [uploadProgress, setUploadProgress] = useState<Record<string, number>>({});
+    const [uploadingField, setUploadingField] = useState<string | null>(null);
 
     // Course form state
     const [showCourseModal, setShowCourseModal] = useState(false);
@@ -103,6 +112,9 @@ export const TeacherDashboard: React.FC = () => {
                     account_holder: profileData.account_holder || '',
                     certificates_description: profileData.certificates_description || '',
                 });
+                setAvatarUrl(profileData.avatar_url || '');
+                setVideoDemoUrl(profileData.video_demo_url || '');
+                setCertificateUrls(profileData.certificate_urls || []);
             }
         } catch (err: any) {
             setError(err.message);
@@ -155,7 +167,10 @@ export const TeacherDashboard: React.FC = () => {
             const result = await teacherService.submitProfile({
                 ...profileForm,
                 full_name: fullName,
-                bio: bio
+                bio: bio,
+                avatar_url: avatarUrl || undefined,
+                video_demo_url: videoDemoUrl || undefined,
+                certificate_urls: certificateUrls.length > 0 ? certificateUrls : undefined,
             });
             setSuccess(result.message);
             setShowProfileForm(false);
@@ -232,6 +247,75 @@ export const TeacherDashboard: React.FC = () => {
             ...profileForm,
             locations: profileForm.locations.filter(l => l !== loc)
         });
+    };
+
+    // ─── File Upload Handlers ────────────────────────────────────────────
+
+    const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        try {
+            setError('');
+            setUploadingField('avatar');
+            setUploadProgress(prev => ({ ...prev, avatar: 0 }));
+            const publicUrl = await uploadService.uploadAvatar(file, (p) => {
+                setUploadProgress(prev => ({ ...prev, avatar: p }));
+            });
+            setAvatarUrl(publicUrl);
+            setSuccess('Upload ảnh đại diện thành công!');
+        } catch (err: any) {
+            setError(err.message);
+        } finally {
+            setUploadingField(null);
+            setUploadProgress(prev => ({ ...prev, avatar: 0 }));
+            e.target.value = '';
+        }
+    };
+
+    const handleVideoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        try {
+            setError('');
+            setUploadingField('video');
+            setUploadProgress(prev => ({ ...prev, video: 0 }));
+            const publicUrl = await uploadService.uploadCourseVideo(file, (p) => {
+                setUploadProgress(prev => ({ ...prev, video: p }));
+            });
+            setVideoDemoUrl(publicUrl);
+            setSuccess('Upload video demo thành công!');
+        } catch (err: any) {
+            setError(err.message);
+        } finally {
+            setUploadingField(null);
+            setUploadProgress(prev => ({ ...prev, video: 0 }));
+            e.target.value = '';
+        }
+    };
+
+    const handleCertificateUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        try {
+            setError('');
+            setUploadingField('cert');
+            setUploadProgress(prev => ({ ...prev, cert: 0 }));
+            const publicUrl = await uploadService.uploadCertificate(file, (p) => {
+                setUploadProgress(prev => ({ ...prev, cert: p }));
+            });
+            setCertificateUrls(prev => [...prev, publicUrl]);
+            setSuccess('Upload chứng chỉ thành công!');
+        } catch (err: any) {
+            setError(err.message);
+        } finally {
+            setUploadingField(null);
+            setUploadProgress(prev => ({ ...prev, cert: 0 }));
+            e.target.value = '';
+        }
+    };
+
+    const removeCertificateUrl = (index: number) => {
+        setCertificateUrls(prev => prev.filter((_, i) => i !== index));
     };
 
     // Show loading state while checking authentication
@@ -592,9 +676,125 @@ export const TeacherDashboard: React.FC = () => {
                                         rows={3}
                                         placeholder="VD: Tốt nghiệp xuất sắc Học viện Âm nhạc Quốc gia Việt Nam..."
                                     />
-                                    <p className="text-xs text-slate-500 mt-1">
-                                        Upload file chứng chỉ sẽ được hỗ trợ trong phiên bản tiếp theo
-                                    </p>
+                                </div>
+
+                                {/* Certificate Images Upload */}
+                                <div className="md:col-span-2">
+                                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                                        <FileImage className="w-4 h-4 inline mr-1" />
+                                        Ảnh chứng chỉ
+                                    </label>
+                                    <div className="flex flex-wrap gap-3 mb-3">
+                                        {certificateUrls.map((url, i) => (
+                                            <div key={i} className="relative group w-24 h-24 rounded-lg overflow-hidden border border-slate-300 dark:border-slate-600">
+                                                <img src={url} alt={`Cert ${i + 1}`} className="w-full h-full object-cover" />
+                                                <button
+                                                    type="button"
+                                                    onClick={() => removeCertificateUrl(i)}
+                                                    className="absolute top-1 right-1 w-5 h-5 bg-red-500 text-white rounded-full text-xs flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                                                >
+                                                    ×
+                                                </button>
+                                            </div>
+                                        ))}
+                                        <label className="w-24 h-24 rounded-lg border-2 border-dashed border-slate-300 dark:border-slate-600 flex flex-col items-center justify-center cursor-pointer hover:border-primary transition-colors">
+                                            {uploadingField === 'cert' ? (
+                                                <span className="text-xs font-bold text-primary">{uploadProgress.cert || 0}%</span>
+                                            ) : (
+                                                <>
+                                                    <Plus className="w-6 h-6 text-slate-400" />
+                                                    <span className="text-xs text-slate-400 mt-1">Thêm ảnh</span>
+                                                </>
+                                            )}
+                                            <input
+                                                type="file"
+                                                accept=".jpg,.jpeg,.png,.webp"
+                                                onChange={handleCertificateUpload}
+                                                className="hidden"
+                                                disabled={uploadingField === 'cert'}
+                                            />
+                                        </label>
+                                    </div>
+                                    <p className="text-xs text-slate-500">JPG, PNG, WEBP (tối đa 5MB mỗi ảnh)</p>
+                                </div>
+
+                                {/* Avatar Upload */}
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                                        <Camera className="w-4 h-4 inline mr-1" />
+                                        Ảnh đại diện giáo viên
+                                    </label>
+                                    <div className="flex items-center gap-4">
+                                        <div className="relative group w-20 h-20 rounded-full overflow-hidden bg-slate-200 dark:bg-slate-700 flex items-center justify-center">
+                                            {avatarUrl ? (
+                                                <img src={avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
+                                            ) : (
+                                                <Camera className="w-8 h-8 text-slate-400" />
+                                            )}
+                                            <label className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 cursor-pointer transition-opacity rounded-full">
+                                                {uploadingField === 'avatar' ? (
+                                                    <span className="text-white text-xs font-bold">{uploadProgress.avatar || 0}%</span>
+                                                ) : (
+                                                    <Camera className="w-5 h-5 text-white" />
+                                                )}
+                                                <input
+                                                    type="file"
+                                                    accept=".jpg,.jpeg,.png,.webp"
+                                                    onChange={handleAvatarUpload}
+                                                    className="hidden"
+                                                    disabled={uploadingField === 'avatar'}
+                                                />
+                                            </label>
+                                        </div>
+                                        <p className="text-xs text-slate-500">JPG, PNG, WEBP (tối đa 5MB)</p>
+                                    </div>
+                                </div>
+
+                                {/* Video Demo Upload */}
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                                        <Video className="w-4 h-4 inline mr-1" />
+                                        Video giới thiệu dạy học
+                                    </label>
+                                    {videoDemoUrl ? (
+                                        <div className="space-y-2">
+                                            <video src={videoDemoUrl} controls className="w-full max-h-40 rounded-lg bg-black" />
+                                            <button
+                                                type="button"
+                                                onClick={() => setVideoDemoUrl('')}
+                                                className="text-xs text-red-500 hover:text-red-700"
+                                            >
+                                                Xóa video
+                                            </button>
+                                        </div>
+                                    ) : (
+                                        <label className="flex flex-col items-center justify-center w-full h-28 border-2 border-dashed border-slate-300 dark:border-slate-600 rounded-lg cursor-pointer hover:border-primary transition-colors">
+                                            {uploadingField === 'video' ? (
+                                                <div className="text-center">
+                                                    <div className="w-32 h-2 bg-slate-200 dark:bg-slate-600 rounded-full overflow-hidden mb-2">
+                                                        <div
+                                                            className="h-full bg-primary rounded-full transition-all"
+                                                            style={{ width: `${uploadProgress.video || 0}%` }}
+                                                        />
+                                                    </div>
+                                                    <span className="text-xs text-primary font-bold">{uploadProgress.video || 0}%</span>
+                                                </div>
+                                            ) : (
+                                                <>
+                                                    <Video className="w-8 h-8 text-slate-400 mb-1" />
+                                                    <span className="text-sm text-slate-500">Chọn video</span>
+                                                    <span className="text-xs text-slate-400">MP4, MOV (tối đa 50MB)</span>
+                                                </>
+                                            )}
+                                            <input
+                                                type="file"
+                                                accept=".mp4,.mov"
+                                                onChange={handleVideoUpload}
+                                                className="hidden"
+                                                disabled={uploadingField === 'video'}
+                                            />
+                                        </label>
+                                    )}
                                 </div>
                             </div>
 

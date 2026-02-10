@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { User, Heart, ShoppingBag, Calendar, Edit2, Lock, Save, X } from 'lucide-react';
+import { User, Heart, ShoppingBag, Calendar, Edit2, Lock, Save, X, Camera } from 'lucide-react';
+import uploadService from '../lib/uploadService';
 import { useAuth } from '../contexts/AuthContext';
 import { Header } from '../components/Header';
 import { Footer } from '../components/Footer';
@@ -31,6 +32,10 @@ export const ProfilePage: React.FC = () => {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
+
+    // Avatar upload
+    const [avatarUploading, setAvatarUploading] = useState(false);
+    const [avatarProgress, setAvatarProgress] = useState(0);
 
     useEffect(() => {
         // Wait for auth to finish loading before checking authentication
@@ -65,6 +70,34 @@ export const ProfilePage: React.FC = () => {
             console.error('Error loading data:', err);
         } finally {
             setLoading(false);
+        }
+    };
+
+    const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        try {
+            setError('');
+            setSuccess('');
+            setAvatarUploading(true);
+            setAvatarProgress(0);
+
+            const publicUrl = await uploadService.uploadAvatar(file, (percent) => {
+                setAvatarProgress(percent);
+            });
+
+            // Save avatar URL to profile via backend
+            await userService.updateProfile({ avatar_url: publicUrl });
+            await refreshUser();
+            setSuccess('Cập nhật ảnh đại diện thành công!');
+        } catch (err: any) {
+            setError(err.message || 'Upload ảnh đại diện thất bại');
+        } finally {
+            setAvatarUploading(false);
+            setAvatarProgress(0);
+            // Reset input
+            e.target.value = '';
         }
     };
 
@@ -241,6 +274,42 @@ export const ProfilePage: React.FC = () => {
                                             Chỉnh sửa
                                         </button>
                                     )}
+                                </div>
+
+                                {/* Avatar Section */}
+                                <div className="flex items-center gap-6 mb-6">
+                                    <div className="relative group">
+                                        <div className="w-24 h-24 rounded-full bg-slate-200 dark:bg-slate-700 overflow-hidden flex items-center justify-center">
+                                            {user.avatar_url ? (
+                                                <img
+                                                    src={user.avatar_url}
+                                                    alt="Avatar"
+                                                    className="w-full h-full object-cover"
+                                                />
+                                            ) : (
+                                                <User className="w-12 h-12 text-slate-400" />
+                                            )}
+                                        </div>
+                                        <label className="absolute inset-0 flex items-center justify-center bg-black/40 rounded-full opacity-0 group-hover:opacity-100 cursor-pointer transition-opacity">
+                                            <Camera className="w-6 h-6 text-white" />
+                                            <input
+                                                type="file"
+                                                accept=".jpg,.jpeg,.png,.webp"
+                                                onChange={handleAvatarUpload}
+                                                className="hidden"
+                                                disabled={avatarUploading}
+                                            />
+                                        </label>
+                                        {avatarUploading && (
+                                            <div className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-full">
+                                                <span className="text-white text-xs font-bold">{avatarProgress}%</span>
+                                            </div>
+                                        )}
+                                    </div>
+                                    <div>
+                                        <p className="text-sm text-slate-600 dark:text-slate-400">Ảnh đại diện</p>
+                                        <p className="text-xs text-slate-500">JPG, PNG, WEBP (tối đa 5MB)</p>
+                                    </div>
                                 </div>
 
                                 <div className="grid md:grid-cols-2 gap-6">

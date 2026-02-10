@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
     LayoutDashboard, Package, ShoppingBag, Users, Plus, Edit2, Trash2,
-    Check, X, Search, Filter, TrendingUp, GraduationCap, AlertCircle, CheckCircle, XCircle
+    Check, X, Search, Filter, TrendingUp, GraduationCap, AlertCircle, CheckCircle, XCircle,
+    ImageIcon, Upload
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { Header } from '../components/Header';
@@ -11,6 +12,7 @@ import { TeacherDetailModal } from '../components/TeacherDetailModal';
 import pianoService, { Piano } from '../lib/pianoService';
 import orderService, { OrderWithDetails } from '../lib/orderService';
 import userService from '../lib/userService';
+import uploadService from '../lib/uploadService';
 
 export const AdminDashboard: React.FC = () => {
     const { user, isAuthenticated, isLoading: authLoading } = useAuth();
@@ -51,6 +53,10 @@ export const AdminDashboard: React.FC = () => {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
+
+    // Piano image upload
+    const [pianoImageUploading, setPianoImageUploading] = useState(false);
+    const [pianoImageProgress, setPianoImageProgress] = useState(0);
 
     useEffect(() => {
         // Wait for auth to finish loading before checking authentication
@@ -137,6 +143,29 @@ export const AdminDashboard: React.FC = () => {
             setError(err.message);
         } finally {
             setLoading(false);
+        }
+    };
+
+    const handlePianoImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        try {
+            setError('');
+            setPianoImageUploading(true);
+            setPianoImageProgress(0);
+            // Use editingPiano id or a temp id for new pianos
+            const pianoId = editingPiano?.id?.toString() || 'new-' + Date.now();
+            const publicUrl = await uploadService.uploadPianoImage(file, pianoId, (p) => {
+                setPianoImageProgress(p);
+            });
+            setPianoForm(prev => ({ ...prev, image_url: publicUrl }));
+            setSuccess('Upload ảnh piano thành công!');
+        } catch (err: any) {
+            setError(err.message);
+        } finally {
+            setPianoImageUploading(false);
+            setPianoImageProgress(0);
+            e.target.value = '';
         }
     };
 
@@ -609,8 +638,16 @@ export const AdminDashboard: React.FC = () => {
                                                         >
                                                             <td className="px-6 py-4">
                                                                 <div className="flex items-center gap-3">
-                                                                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary to-cyan-600 flex items-center justify-center text-white font-bold">
-                                                                        {teacher.full_name?.charAt(0).toUpperCase() || 'G'}
+                                                                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary to-cyan-600 flex items-center justify-center text-white font-bold overflow-hidden">
+                                                                        {teacher.avatar_url ? (
+                                                                            <img 
+                                                                                src={teacher.avatar_url} 
+                                                                                alt={teacher.full_name}
+                                                                                className="w-full h-full object-cover"
+                                                                            />
+                                                                        ) : (
+                                                                            <span>{teacher.full_name?.charAt(0).toUpperCase() || 'G'}</span>
+                                                                        )}
                                                                     </div>
                                                                     <div>
                                                                         <p className="font-semibold text-slate-900 dark:text-white">
@@ -691,6 +728,9 @@ export const AdminDashboard: React.FC = () => {
                         onAddFeature={addFeature}
                         onRemoveFeature={removeFeature}
                         loading={loading}
+                        onImageUpload={handlePianoImageUpload}
+                        imageUploading={pianoImageUploading}
+                        imageProgress={pianoImageProgress}
                     />
                 )}
 
@@ -835,7 +875,8 @@ const OrderCard: React.FC<{
 
 const PianoModal: React.FC<any> = ({
     piano, isEdit, onSave, onClose, onChange,
-    featureInput, onFeatureInputChange, onAddFeature, onRemoveFeature, loading
+    featureInput, onFeatureInputChange, onAddFeature, onRemoveFeature, loading,
+    onImageUpload, imageUploading, imageProgress
 }) => (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 overflow-y-auto">
         <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl max-w-2xl w-full p-6 my-8">
@@ -885,13 +926,65 @@ const PianoModal: React.FC<any> = ({
                 </div>
 
                 <div>
-                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Image URL</label>
+                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                        <ImageIcon className="w-4 h-4 inline mr-1" />
+                        Ảnh Piano
+                    </label>
+                    {piano.image_url ? (
+                        <div className="space-y-2">
+                            <img src={piano.image_url} alt="Piano" className="w-full h-40 object-cover rounded-lg" />
+                            <div className="flex gap-2">
+                                <label className="flex-1 flex items-center justify-center gap-2 px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-700 text-sm">
+                                    <Upload className="w-4 h-4" />
+                                    Đổi ảnh
+                                    <input
+                                        type="file"
+                                        accept=".jpg,.jpeg,.png,.webp"
+                                        onChange={onImageUpload}
+                                        className="hidden"
+                                        disabled={imageUploading}
+                                    />
+                                </label>
+                                <button
+                                    type="button"
+                                    onClick={() => onChange({ ...piano, image_url: '' })}
+                                    className="px-4 py-2 text-red-500 border border-red-300 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 text-sm"
+                                >
+                                    Xóa
+                                </button>
+                            </div>
+                        </div>
+                    ) : (
+                        <label className="flex flex-col items-center justify-center w-full h-40 border-2 border-dashed border-slate-300 dark:border-slate-600 rounded-lg cursor-pointer hover:border-primary transition-colors">
+                            {imageUploading ? (
+                                <div className="text-center">
+                                    <div className="w-32 h-2 bg-slate-200 dark:bg-slate-600 rounded-full overflow-hidden mb-2">
+                                        <div className="h-full bg-primary rounded-full transition-all" style={{ width: `${imageProgress || 0}%` }} />
+                                    </div>
+                                    <span className="text-xs text-primary font-bold">{imageProgress || 0}%</span>
+                                </div>
+                            ) : (
+                                <>
+                                    <ImageIcon className="w-10 h-10 text-slate-400 mb-2" />
+                                    <span className="text-sm text-slate-500">Click để upload ảnh</span>
+                                    <span className="text-xs text-slate-400">JPG, PNG, WEBP (tối đa 5MB)</span>
+                                </>
+                            )}
+                            <input
+                                type="file"
+                                accept=".jpg,.jpeg,.png,.webp"
+                                onChange={onImageUpload}
+                                className="hidden"
+                                disabled={imageUploading}
+                            />
+                        </label>
+                    )}
                     <input
-                        type="url"
+                        type="text"
                         value={piano.image_url}
                         onChange={(e) => onChange({ ...piano, image_url: e.target.value })}
-                        className="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white"
-                        placeholder="https://..."
+                        className="mt-2 w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white text-xs"
+                        placeholder="Hoặc nhập URL trực tiếp..."
                     />
                 </div>
 
