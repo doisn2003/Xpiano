@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { X, Check, XCircle, Award, Calendar, Mail, Phone, BookOpen, User, FileImage, Video } from 'lucide-react';
+import { GoldButton } from './GoldButton';
 
 interface TeacherDetailModalProps {
     teacher: any;
@@ -59,12 +60,12 @@ export const TeacherDetailModal: React.FC<TeacherDetailModalProps> = ({
                             {statusText[teacher.verification_status as keyof typeof statusText]}
                         </span>
                     </div>
-                    <button 
-                        onClick={onClose} 
-                        className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
+                    <GoldButton
+                        onClick={onClose}
+                        className="!bg-transparent !bg-none !p-0 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 shadow-none"
                     >
                         <X className="w-6 h-6" />
-                    </button>
+                    </GoldButton>
                 </div>
 
                 {/* Content */}
@@ -180,7 +181,7 @@ export const TeacherDetailModal: React.FC<TeacherDetailModalProps> = ({
                             </label>
                             <div className="grid md:grid-cols-2 gap-3">
                                 {teacher.certificates.map((cert: any, idx: number) => (
-                                    <div 
+                                    <div
                                         key={idx}
                                         className="p-4 border border-slate-200 dark:border-slate-700 rounded-lg bg-slate-50 dark:bg-slate-700/50"
                                     >
@@ -292,28 +293,28 @@ export const TeacherDetailModal: React.FC<TeacherDetailModalProps> = ({
                     <div className="sticky bottom-0 bg-slate-50 dark:bg-slate-900 border-t border-slate-200 dark:border-slate-700 px-6 py-4">
                         {!showRejectInput ? (
                             <div className="flex gap-3">
-                                <button
+                                <GoldButton
                                     onClick={handleApprove}
                                     disabled={loading}
-                                    className="flex-1 flex items-center justify-center gap-2 px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-semibold"
+                                    className="flex-1 flex items-center justify-center gap-2 px-6 py-3 !bg-green-600 !bg-none text-white rounded-lg hover:!bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed font-semibold"
                                 >
                                     <Check className="w-5 h-5" />
                                     Phê duyệt hồ sơ
-                                </button>
-                                <button
+                                </GoldButton>
+                                <GoldButton
                                     onClick={() => setShowRejectInput(true)}
                                     disabled={loading}
-                                    className="flex-1 flex items-center justify-center gap-2 px-6 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-semibold"
+                                    className="flex-1 flex items-center justify-center gap-2 px-6 py-3 !bg-red-600 !bg-none text-white rounded-lg hover:!bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed font-semibold"
                                 >
                                     <XCircle className="w-5 h-5" />
                                     Từ chối hồ sơ
-                                </button>
-                                <button
+                                </GoldButton>
+                                <GoldButton
                                     onClick={onClose}
-                                    className="px-6 py-3 bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-lg hover:bg-slate-300 dark:hover:bg-slate-600 transition-colors font-semibold"
+                                    className="px-6 py-3 !bg-slate-200 !bg-none dark:!bg-slate-700 text-slate-700 dark:text-slate-300 rounded-lg hover:!bg-slate-300 dark:hover:!bg-slate-600 font-semibold"
                                 >
                                     Đóng
-                                </button>
+                                </GoldButton>
                             </div>
                         ) : (
                             <div className="space-y-3">
@@ -326,22 +327,22 @@ export const TeacherDetailModal: React.FC<TeacherDetailModalProps> = ({
                                     autoFocus
                                 />
                                 <div className="flex gap-3">
-                                    <button
+                                    <GoldButton
                                         onClick={handleReject}
                                         disabled={loading || !rejectReason.trim()}
-                                        className="flex-1 px-6 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-semibold"
+                                        className="flex-1 px-6 py-3 !bg-red-600 !bg-none text-white rounded-lg hover:!bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed font-semibold"
                                     >
                                         Xác nhận từ chối
-                                    </button>
-                                    <button
+                                    </GoldButton>
+                                    <GoldButton
                                         onClick={() => {
                                             setShowRejectInput(false);
                                             setRejectReason('');
                                         }}
-                                        className="px-6 py-3 bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-lg hover:bg-slate-300 dark:hover:bg-slate-600 transition-colors font-semibold"
+                                        className="px-6 py-3 !bg-slate-200 !bg-none dark:!bg-slate-700 text-slate-700 dark:text-slate-300 rounded-lg hover:!bg-slate-300 dark:hover:!bg-slate-600 font-semibold"
                                     >
                                         Hủy
-                                    </button>
+                                    </GoldButton>
                                 </div>
                             </div>
                         )}
@@ -350,12 +351,12 @@ export const TeacherDetailModal: React.FC<TeacherDetailModalProps> = ({
 
                 {teacher.verification_status !== 'pending' && (
                     <div className="sticky bottom-0 bg-slate-50 dark:bg-slate-900 border-t border-slate-200 dark:border-slate-700 px-6 py-4">
-                        <button
+                        <GoldButton
                             onClick={onClose}
-                            className="w-full px-6 py-3 bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-lg hover:bg-slate-300 dark:hover:bg-slate-600 transition-colors font-semibold"
+                            className="w-full px-6 py-3 !bg-slate-200 !bg-none dark:!bg-slate-700 text-slate-700 dark:text-slate-300 rounded-lg hover:!bg-slate-300 dark:hover:!bg-slate-600 font-semibold"
                         >
                             Đóng
-                        </button>
+                        </GoldButton>
                     </div>
                 )}
             </div>

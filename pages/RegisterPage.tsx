@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import { GoldButton } from '../components/GoldButton';
 import { useAuth } from '../contexts/AuthContext';
-import { Music, Lock, Mail, User as UserIcon, Phone, AlertCircle, CheckCircle } from 'lucide-react';
+import { Music, Lock, Mail, User as UserIcon, Phone, AlertCircle, CheckCircle, Eye, EyeOff } from 'lucide-react';
 import authService from '../lib/authService';
 
 export const RegisterPage: React.FC = () => {
@@ -21,6 +22,8 @@ export const RegisterPage: React.FC = () => {
     const [success, setSuccess] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const [otpSent, setOtpSent] = useState(false);
+    const [showPassword, setShowPassword] = useState(false);
+    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -103,24 +106,24 @@ export const RegisterPage: React.FC = () => {
 
                 {/* Role Tabs */}
                 <div className="bg-[#1A1A1A] p-1 rounded-xl flex mb-6">
-                    <button
+                    <GoldButton
                         onClick={() => setFormData({ ...formData, role: 'user' })}
                         className={`flex-1 py-2 rounded-lg text-sm font-medium transition-all ${formData.role === 'user'
-                            ? 'bg-[#111] text-[#F0C058] border border-[#F0C058]/30 shadow-sm'
-                            : 'text-slate-400 hover:text-slate-200'
+                            ? 'shadow-sm'
+                            : '!bg-[#111] !bg-none !text-slate-400 hover:!text-slate-200'
                             }`}
                     >
                         Khách/Học viên
-                    </button>
-                    <button
+                    </GoldButton>
+                    <GoldButton
                         onClick={() => setFormData({ ...formData, role: 'teacher' })}
                         className={`flex-1 py-2 rounded-lg text-sm font-medium transition-all ${formData.role === 'teacher'
-                            ? 'bg-[#111] text-[#F0C058] border border-[#F0C058]/30 shadow-sm'
-                            : 'text-slate-400 hover:text-slate-200'
+                            ? 'shadow-sm'
+                            : '!bg-[#111] !bg-none !text-slate-400 hover:!text-slate-200'
                             }`}
                     >
                         Giáo viên
-                    </button>
+                    </GoldButton>
                 </div>
 
                 {/* Register Form */}
@@ -190,40 +193,54 @@ export const RegisterPage: React.FC = () => {
                                     placeholder="Mã xác thực"
                                 />
                             </div>
-                            <button
+                            <GoldButton
                                 type="button"
                                 onClick={handleSendOtp}
                                 disabled={isLoading || otpSent}
-                                className="px-4 bg-[#1A1A1A] border border-[#F0C058] text-[#F0C058] font-semibold rounded-xl hover:bg-[#F0C058] hover:text-black transition-colors"
+                                className="px-4 font-semibold rounded-xl transition-colors"
                             >
                                 {otpSent ? 'Đã gửi' : 'Gửi mã'}
-                            </button>
+                            </GoldButton>
                         </div>
 
                         <div className="relative">
                             <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500" />
                             <input
-                                type="password"
+                                type={showPassword ? 'text' : 'password'}
                                 name="password"
                                 value={formData.password}
                                 onChange={handleChange}
                                 required
-                                className="w-full pl-12 pr-4 py-3 rounded-xl border border-slate-700 bg-[#1A1A1A] text-white focus:ring-1 focus:ring-[#F0C058] focus:border-[#F0C058] placeholder:text-slate-600"
+                                className="w-full pl-12 pr-12 py-3.5 rounded-xl border border-slate-700 bg-[#1A1A1A] text-white focus:ring-1 focus:ring-[#F0C058] focus:border-[#F0C058] placeholder:text-slate-600"
                                 placeholder="Mật khẩu"
                             />
+                            <GoldButton
+                                type="button"
+                                onClick={() => setShowPassword(!showPassword)}
+                                className="!absolute right-4 top-1/2 -translate-y-1/2 !bg-transparent !bg-none !p-0 text-slate-500 hover:text-slate-300 shadow-none border-none"
+                            >
+                                {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                            </GoldButton>
                         </div>
 
                         <div className="relative">
                             <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500" />
                             <input
-                                type="password"
+                                type={showConfirmPassword ? 'text' : 'password'}
                                 name="confirmPassword"
                                 value={formData.confirmPassword}
                                 onChange={handleChange}
                                 required
-                                className="w-full pl-12 pr-4 py-3 rounded-xl border border-slate-700 bg-[#1A1A1A] text-white focus:ring-1 focus:ring-[#F0C058] focus:border-[#F0C058] placeholder:text-slate-600"
+                                className="w-full pl-12 pr-12 py-3.5 rounded-xl border border-slate-700 bg-[#1A1A1A] text-white focus:ring-1 focus:ring-[#F0C058] focus:border-[#F0C058] placeholder:text-slate-600"
                                 placeholder="Nhập lại mật khẩu"
                             />
+                            <GoldButton
+                                type="button"
+                                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                                className="!absolute right-4 top-1/2 -translate-y-1/2 !bg-transparent !bg-none !p-0 text-slate-500 hover:text-slate-300 shadow-none border-none"
+                            >
+                                {showConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                            </GoldButton>
                         </div>
 
                         <div className="flex items-start gap-2 mt-2">
@@ -231,13 +248,13 @@ export const RegisterPage: React.FC = () => {
                             <span className="text-xs text-slate-400">Tôi đồng ý với Điều khoản & Chính sách</span>
                         </div>
 
-                        <button
+                        <GoldButton
                             type="submit"
                             disabled={isLoading}
-                            className="w-full bg-[#F0C058] hover:bg-[#d9ab4b] text-[#111] py-3.5 rounded-xl font-bold shadow-lg shadow-[#F0C058]/20 transition-all active:scale-[0.98] disabled:opacity-50 mt-4 uppercase tracking-wide"
+                            className="w-full py-3.5 rounded-xl font-bold shadow-lg shadow-[#F0C058]/20 transition-all active:scale-[0.98] disabled:opacity-50 mt-4 uppercase tracking-wide"
                         >
                             {isLoading ? 'Đang xử lý...' : 'Đăng ký'}
-                        </button>
+                        </GoldButton>
                     </form>
 
                     <div className="mt-6 text-center">

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import { GoldButton } from '../components/GoldButton';
 import { useAuth } from '../contexts/AuthContext';
 import authService from '../lib/authService';
 import { Lock, Mail, AlertCircle, CheckCircle, User as UserIcon, Phone, Shield } from 'lucide-react';
@@ -191,39 +192,39 @@ export const LoginAdmin: React.FC = () => {
 
                 {/* Auth Mode Tabs: Login / Register */}
                 <div className="bg-[#1A1A1A] p-1 rounded-xl flex mb-4">
-                    <button
+                    <GoldButton
                         onClick={() => switchMode('login')}
                         className={`flex-1 py-2 rounded-lg text-sm font-medium transition-all ${authMode === 'login'
-                            ? 'bg-[#111] text-[#F0C058] border border-[#F0C058]/30 shadow-sm'
-                            : 'text-slate-400 hover:text-slate-200'
+                            ? 'shadow-sm'
+                            : '!bg-[#111] !bg-none !text-slate-400 hover:!text-slate-200'
                             }`}
                     >
                         Đăng nhập
-                    </button>
-                    <button
+                    </GoldButton>
+                    <GoldButton
                         onClick={() => switchMode('register')}
                         className={`flex-1 py-2 rounded-lg text-sm font-medium transition-all ${authMode === 'register'
-                            ? 'bg-[#111] text-[#F0C058] border border-[#F0C058]/30 shadow-sm'
-                            : 'text-slate-400 hover:text-slate-200'
+                            ? 'shadow-sm'
+                            : '!bg-[#111] !bg-none !text-slate-400 hover:!text-slate-200'
                             }`}
                     >
                         Đăng ký
-                    </button>
+                    </GoldButton>
                 </div>
 
                 {/* Role Tabs: Admin / Chủ kho đàn */}
                 <div className="bg-[#1A1A1A] p-1 rounded-xl flex mb-6">
                     {(Object.keys(roleLabelMap) as AdminRole[]).map((r) => (
-                        <button
+                        <GoldButton
                             key={r}
                             onClick={() => setRole(r)}
                             className={`flex-1 py-2 rounded-lg text-sm font-medium transition-all ${role === r
-                                ? 'bg-[#111] text-[#F0C058] border border-[#F0C058]/30 shadow-sm'
-                                : 'text-slate-400 hover:text-slate-200'
+                                ? 'shadow-sm'
+                                : '!bg-[#111] !bg-none !text-slate-400 hover:!text-slate-200'
                                 }`}
                         >
                             {roleLabelMap[r]}
-                        </button>
+                        </GoldButton>
                     ))}
                 </div>
 
@@ -280,14 +281,14 @@ export const LoginAdmin: React.FC = () => {
                                     className="w-full pl-4 pr-4 py-3.5 rounded-xl border border-slate-700 bg-[#1A1A1A] text-white focus:ring-1 focus:ring-[#F0C058] focus:border-[#F0C058] transition-all placeholder:text-slate-600"
                                     placeholder="Mã xác thực (OTP)"
                                 />
-                                <button
+                                <GoldButton
                                     type="button"
                                     onClick={handleSendLoginOtp}
                                     disabled={isLoading || otpSent}
-                                    className="px-4 py-2 bg-[#F0C058] text-black font-medium rounded-xl hover:bg-[#d9ab4b] disabled:opacity-50 whitespace-nowrap"
+                                    className="px-4 py-2 font-medium rounded-xl disabled:opacity-50 whitespace-nowrap"
                                 >
                                     {otpSent ? 'Đã gửi' : 'Gửi mã'}
-                                </button>
+                                </GoldButton>
                             </div>
                         )}
 
@@ -296,23 +297,23 @@ export const LoginAdmin: React.FC = () => {
                             <Link to="/forgot-password" className="text-slate-400 hover:text-[#F0C058] transition-colors">
                                 Quên mật khẩu?
                             </Link>
-                            <button
+                            <GoldButton
                                 type="button"
                                 onClick={() => setLoginMethod(loginMethod === 'password' ? 'otp' : 'password')}
-                                className="text-[#F0C058] hover:text-[#d9ab4b] font-medium transition-colors"
+                                className="!bg-transparent !bg-none text-[#F0C058] hover:text-[#d9ab4b] font-medium transition-colors !p-0"
                             >
                                 {loginMethod === 'password' ? 'Đăng nhập bằng OTP' : 'Đăng nhập bằng Mật khẩu'}
-                            </button>
+                            </GoldButton>
                         </div>
 
                         {/* Submit */}
-                        <button
+                        <GoldButton
                             type="submit"
                             disabled={isLoading}
-                            className="w-full bg-gradient-to-r from-[#F0C058] to-[#d9ab4b] hover:from-[#E0B048] hover:to-[#c99b3b] text-[#111] py-3.5 rounded-xl font-bold shadow-lg shadow-[#F0C058]/20 hover:shadow-[#F0C058]/30 transition-all transform active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed mt-6 uppercase tracking-wide"
+                            className="w-full py-3.5 rounded-xl font-bold shadow-lg shadow-[#F0C058]/20 transition-all transform active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed mt-6 uppercase tracking-wide"
                         >
                             {isLoading ? 'Đang xử lý...' : 'Đăng nhập'}
-                        </button>
+                        </GoldButton>
                     </form>
                 )}
 
@@ -373,14 +374,14 @@ export const LoginAdmin: React.FC = () => {
                                     placeholder="Mã xác thực"
                                 />
                             </div>
-                            <button
+                            <GoldButton
                                 type="button"
                                 onClick={handleSendRegOtp}
                                 disabled={isLoading || regOtpSent}
-                                className="px-4 bg-[#1A1A1A] border border-[#F0C058] text-[#F0C058] font-semibold rounded-xl hover:bg-[#F0C058] hover:text-black transition-colors"
+                                className="px-4 font-semibold rounded-xl transition-colors"
                             >
                                 {regOtpSent ? 'Đã gửi' : 'Gửi mã'}
-                            </button>
+                            </GoldButton>
                         </div>
 
                         {/* Password */}
@@ -421,13 +422,13 @@ export const LoginAdmin: React.FC = () => {
                         </div>
 
                         {/* Submit */}
-                        <button
+                        <GoldButton
                             type="submit"
                             disabled={isLoading}
-                            className="w-full bg-[#F0C058] hover:bg-[#d9ab4b] text-[#111] py-3.5 rounded-xl font-bold shadow-lg shadow-[#F0C058]/20 transition-all active:scale-[0.98] disabled:opacity-50 mt-4 uppercase tracking-wide"
+                            className="w-full py-3.5 rounded-xl font-bold shadow-lg shadow-[#F0C058]/20 transition-all active:scale-[0.98] disabled:opacity-50 mt-4 uppercase tracking-wide"
                         >
                             {isLoading ? 'Đang xử lý...' : 'Đăng ký'}
-                        </button>
+                        </GoldButton>
                     </form>
                 )}
 

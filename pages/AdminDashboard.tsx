@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { GoldButton } from '../components/GoldButton';
 import {
     LayoutDashboard, Package, ShoppingBag, Users, Plus, Edit2, Trash2,
     Check, X, Search, Filter, TrendingUp, GraduationCap, AlertCircle, CheckCircle, XCircle,
@@ -126,7 +127,7 @@ export const AdminDashboard: React.FC = () => {
 
     const handleRevokeTeacher = async (id: string) => {
         const reason = prompt('⚠️ HỦY HỢP ĐỒNG GIÁO VIÊN\n\nGiáo viên sẽ không thể mở lớp học cho đến khi nộp lại hồ sơ và được phê duyệt.\n\nNhập lý do hủy hợp đồng:');
-        
+
         if (!reason || reason.trim() === '') {
             alert('Vui lòng nhập lý do hủy hợp đồng');
             return;
@@ -335,13 +336,13 @@ export const AdminDashboard: React.FC = () => {
                     {error && (
                         <div className="mb-4 p-4 bg-red-100 dark:bg-red-900/30 border border-red-300 dark:border-red-700 text-red-800 dark:text-red-300 rounded-lg flex justify-between items-center">
                             <span>{error}</span>
-                            <button onClick={() => setError('')}><X className="w-5 h-5" /></button>
+                            <GoldButton onClick={() => setError('')} className="!p-1 !bg-transparent !bg-none text-red-800 dark:text-red-300"><X className="w-5 h-5" /></GoldButton>
                         </div>
                     )}
                     {success && (
                         <div className="mb-4 p-4 bg-green-100 dark:bg-green-900/30 border border-green-300 dark:border-green-700 text-green-800 dark:text-green-300 rounded-lg flex justify-between items-center">
                             <span>{success}</span>
-                            <button onClick={() => setSuccess('')}><X className="w-5 h-5" /></button>
+                            <GoldButton onClick={() => setSuccess('')} className="!p-1 !bg-transparent !bg-none text-green-800 dark:text-green-300"><X className="w-5 h-5" /></GoldButton>
                         </div>
                     )}
 
@@ -354,17 +355,17 @@ export const AdminDashboard: React.FC = () => {
                             { id: 'users', label: 'Người dùng', icon: Users },
                             { id: 'teachers', label: 'Giáo viên', icon: GraduationCap },
                         ].map(({ id, label, icon: Icon }) => (
-                            <button
+                            <GoldButton
                                 key={id}
                                 onClick={() => setActiveTab(id as any)}
                                 className={`flex items-center gap-2 px-6 py-3 rounded-lg font-medium transition-colors ${activeTab === id
-                                        ? 'bg-primary text-white'
-                                        : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700'
+                                    ? 'shadow-md'
+                                    : '!bg-white dark:!bg-slate-800 !bg-none text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700'
                                     }`}
                             >
                                 <Icon className="w-5 h-5" />
                                 <span>{label}</span>
-                            </button>
+                            </GoldButton>
                         ))}
                     </div>
 
@@ -445,13 +446,13 @@ export const AdminDashboard: React.FC = () => {
                                     <h2 className="text-2xl font-bold text-slate-900 dark:text-white">
                                         Quản lý Pianos ({pianos.length})
                                     </h2>
-                                    <button
+                                    <GoldButton
                                         onClick={() => handleOpenPianoModal()}
-                                        className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
+                                        className="flex items-center gap-2 px-4 py-2 rounded-lg"
                                     >
                                         <Plus className="w-5 h-5" />
                                         Thêm Piano
-                                    </button>
+                                    </GoldButton>
                                 </div>
 
                                 {loading ? (
@@ -486,18 +487,18 @@ export const AdminDashboard: React.FC = () => {
                                                         <td className="px-4 py-3 text-yellow-600">⭐ {piano.rating}</td>
                                                         <td className="px-4 py-3">
                                                             <div className="flex items-center justify-end gap-2">
-                                                                <button
+                                                                <GoldButton
                                                                     onClick={() => handleOpenPianoModal(piano)}
-                                                                    className="p-2 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded"
+                                                                    className="p-2 !bg-transparent !bg-none text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded"
                                                                 >
                                                                     <Edit2 className="w-4 h-4" />
-                                                                </button>
-                                                                <button
+                                                                </GoldButton>
+                                                                <GoldButton
                                                                     onClick={() => handleDeletePiano(piano.id)}
-                                                                    className="p-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded"
+                                                                    className="p-2 !bg-transparent !bg-none text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded"
                                                                 >
                                                                     <Trash2 className="w-4 h-4" />
-                                                                </button>
+                                                                </GoldButton>
                                                             </div>
                                                         </td>
                                                     </tr>
@@ -626,10 +627,10 @@ export const AdminDashboard: React.FC = () => {
                                                 {teachers.map((teacher: any) => {
                                                     const isApproved = teacher.verification_status === 'approved';
                                                     const isPending = teacher.verification_status === 'pending';
-                                                    
+
                                                     return (
-                                                        <tr 
-                                                            key={teacher.id} 
+                                                        <tr
+                                                            key={teacher.id}
                                                             className="hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors cursor-pointer"
                                                             onClick={() => {
                                                                 setSelectedTeacher(teacher);
@@ -640,8 +641,8 @@ export const AdminDashboard: React.FC = () => {
                                                                 <div className="flex items-center gap-3">
                                                                     <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary to-cyan-600 flex items-center justify-center text-white font-bold overflow-hidden">
                                                                         {teacher.avatar_url ? (
-                                                                            <img 
-                                                                                src={teacher.avatar_url} 
+                                                                            <img
+                                                                                src={teacher.avatar_url}
                                                                                 alt={teacher.full_name}
                                                                                 className="w-full h-full object-cover"
                                                                             />
@@ -688,20 +689,19 @@ export const AdminDashboard: React.FC = () => {
                                                                 )}
                                                             </td>
                                                             <td className="px-6 py-4 text-right">
-                                                                <button
-                                                                    onClick={(e) => {
+                                                                <GoldButton
+                                                                    onClick={(e: React.MouseEvent) => {
                                                                         e.stopPropagation();
                                                                         handleRevokeTeacher(teacher.id);
                                                                     }}
                                                                     disabled={!isApproved}
-                                                                    className={`text-sm font-medium px-3 py-1.5 rounded border transition-colors ${
-                                                                        isApproved
-                                                                            ? 'text-red-600 bg-red-50 border-red-100 hover:bg-red-100 dark:text-red-400 dark:bg-red-900/20 dark:border-red-900/50 dark:hover:bg-red-900/40'
-                                                                            : 'text-slate-400 bg-slate-100 border-slate-200 cursor-not-allowed opacity-60 dark:text-slate-600 dark:bg-slate-800 dark:border-slate-700'
-                                                                    }`}
+                                                                    className={`text-sm font-medium px-3 py-1.5 rounded border transition-colors ${isApproved
+                                                                            ? '!bg-red-50 !bg-none border-red-100 text-red-600 hover:bg-red-100'
+                                                                            : '!bg-slate-100 !bg-none border-slate-200 text-slate-400 cursor-not-allowed opacity-60'
+                                                                        }`}
                                                                 >
                                                                     Hủy hợp đồng
-                                                                </button>
+                                                                </GoldButton>
                                                             </td>
                                                         </tr>
                                                     );
@@ -808,12 +808,12 @@ const OrderCard: React.FC<{
 
                 {!isHistory && order.status === 'pending' && (
                     <div className="flex gap-2">
-                        <button
+                        <GoldButton
                             onClick={() => setShowActions(!showActions)}
-                            className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-cyan-800"
+                            className="px-4 py-2 rounded-lg"
                         >
                             Xử lý
-                        </button>
+                        </GoldButton>
                     </div>
                 )}
             </div>
@@ -828,18 +828,18 @@ const OrderCard: React.FC<{
                         rows={2}
                     />
                     <div className="flex gap-2">
-                        <button
+                        <GoldButton
                             onClick={() => {
                                 onApprove?.(order.id);
                                 setNotes('');
                                 setShowActions(false);
                             }}
-                            className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
+                            className="flex items-center gap-2 px-4 py-2 rounded-lg"
                         >
                             <Check className="w-4 h-4" />
                             Duyệt
-                        </button>
-                        <button
+                        </GoldButton>
+                        <GoldButton
                             onClick={() => {
                                 if (notes.trim()) {
                                     onReject?.(order.id);
@@ -849,17 +849,17 @@ const OrderCard: React.FC<{
                                     alert('Vui lòng nhập lý do từ chối');
                                 }
                             }}
-                            className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
+                            className="flex items-center gap-2 px-4 py-2 !bg-red-600 !bg-none text-white rounded-lg hover:bg-red-700"
                         >
                             <X className="w-4 h-4" />
                             Từ chối
-                        </button>
-                        <button
+                        </GoldButton>
+                        <GoldButton
                             onClick={() => setShowActions(false)}
-                            className="px-4 py-2 bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-lg hover:bg-slate-300 dark:hover:bg-slate-600"
+                            className="px-4 py-2 !bg-slate-200 !bg-none dark:!bg-slate-700 text-slate-700 dark:text-slate-300 rounded-lg hover:bg-slate-300 dark:hover:bg-slate-600"
                         >
                             Hủy
-                        </button>
+                        </GoldButton>
                     </div>
                 </div>
             )}
@@ -884,9 +884,9 @@ const PianoModal: React.FC<any> = ({
                 <h2 className="text-2xl font-bold text-slate-900 dark:text-white">
                     {isEdit ? 'Chỉnh sửa Piano' : 'Thêm Piano mới'}
                 </h2>
-                <button onClick={onClose} className="text-slate-400 hover:text-slate-600">
+                <GoldButton onClick={onClose} className="!bg-transparent !bg-none !p-1 text-slate-400 hover:text-slate-600">
                     <X className="w-6 h-6" />
-                </button>
+                </GoldButton>
             </div>
 
             <div className="space-y-4 max-h-[70vh] overflow-y-auto pr-2">
@@ -945,13 +945,13 @@ const PianoModal: React.FC<any> = ({
                                         disabled={imageUploading}
                                     />
                                 </label>
-                                <button
+                                <GoldButton
                                     type="button"
                                     onClick={() => onChange({ ...piano, image_url: '' })}
-                                    className="px-4 py-2 text-red-500 border border-red-300 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 text-sm"
+                                    className="px-4 py-2 !bg-transparent !bg-none text-red-500 border border-red-300 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 text-sm"
                                 >
                                     Xóa
-                                </button>
+                                </GoldButton>
                             </div>
                         </div>
                     ) : (
@@ -1009,13 +1009,13 @@ const PianoModal: React.FC<any> = ({
                             className="flex-1 px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white"
                             placeholder="Nhập feature..."
                         />
-                        <button
+                        <GoldButton
                             type="button"
                             onClick={onAddFeature}
-                            className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-cyan-800"
+                            className="px-4 py-2 rounded-lg"
                         >
                             <Plus className="w-5 h-5" />
-                        </button>
+                        </GoldButton>
                     </div>
                     <div className="flex flex-wrap gap-2">
                         {piano.features.map((feature: string, i: number) => (
@@ -1024,13 +1024,13 @@ const PianoModal: React.FC<any> = ({
                                 className="flex items-center gap-1 px-3 py-1 bg-primary/10 text-primary rounded-full text-sm"
                             >
                                 {feature}
-                                <button
+                                <GoldButton
                                     type="button"
                                     onClick={() => onRemoveFeature(i)}
-                                    className="hover:text-red-600"
+                                    className="!p-0.5 !bg-transparent !bg-none hover:text-red-600"
                                 >
                                     <X className="w-3 h-3" />
-                                </button>
+                                </GoldButton>
                             </span>
                         ))}
                     </div>
@@ -1038,19 +1038,19 @@ const PianoModal: React.FC<any> = ({
             </div>
 
             <div className="flex gap-4 mt-6 pt-6 border-t border-slate-200 dark:border-slate-700">
-                <button
+                <GoldButton
                     onClick={onSave}
                     disabled={loading}
-                    className="flex-1 bg-primary hover:bg-cyan-800 text-white py-3 px-6 rounded-lg font-semibold disabled:opacity-50"
+                    className="flex-1 py-3 px-6 rounded-lg font-semibold disabled:opacity-50"
                 >
                     {loading ? 'Đang lưu...' : isEdit ? 'Cập nhật' : 'Tạo mới'}
-                </button>
-                <button
+                </GoldButton>
+                <GoldButton
                     onClick={onClose}
-                    className="px-6 py-3 bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-lg font-semibold hover:bg-slate-300 dark:hover:bg-slate-600"
+                    className="px-6 py-3 !bg-slate-200 !bg-none dark:!bg-slate-700 text-slate-700 dark:text-slate-300 rounded-lg font-semibold hover:bg-slate-300 dark:hover:bg-slate-600"
                 >
                     Hủy
-                </button>
+                </GoldButton>
             </div>
         </div>
     </div>

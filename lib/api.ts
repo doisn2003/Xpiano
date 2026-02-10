@@ -22,16 +22,11 @@ api.interceptors.request.use(
 
             // However, if we are completely replacing Supabase Client in Frontend for Auth, 
             // we should store our own token.
-            const userStr = localStorage.getItem('user');
-            if (userStr) {
-                const user = JSON.parse(userStr);
-                // But our updated AuthController returns { token } 
-                // And we plan to store it.
-                // Let's assume we store 'token' in localStorage.
-                const token = localStorage.getItem('token');
-                if (token) {
-                    config.headers.Authorization = `Bearer ${token}`;
-                }
+            // We don't strictly need 'user' object to be present to send the token.
+            // The token is the source of truth for authorization.
+            const token = localStorage.getItem('token');
+            if (token) {
+                config.headers.Authorization = `Bearer ${token}`;
             }
         } catch (error) {
             console.error('Error attaching token:', error);

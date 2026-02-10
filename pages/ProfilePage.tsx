@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { GoldButton } from '../components/GoldButton';
 import { User, Heart, ShoppingBag, Calendar, Edit2, Lock, Save, X, Camera } from 'lucide-react';
 import uploadService from '../lib/uploadService';
 import { useAuth } from '../contexts/AuthContext';
@@ -238,12 +239,12 @@ export const ProfilePage: React.FC = () => {
                             { id: 'orders', label: 'Đơn hàng', icon: ShoppingBag },
                             { id: 'rentals', label: 'Đang mượn', icon: Calendar },
                         ].map(({ id, label, icon: Icon }) => (
-                            <button
+                            <GoldButton
                                 key={id}
                                 onClick={() => setActiveTab(id as any)}
                                 className={`flex items-center gap-2 px-6 py-3 rounded-lg font-medium transition-colors ${activeTab === id
-                                    ? 'bg-primary text-white'
-                                    : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700'
+                                    ? 'shadow-lg'
+                                    : '!bg-white !bg-none dark:!bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700'
                                     }`}
                             >
                                 <Icon className="w-5 h-5" />
@@ -254,7 +255,7 @@ export const ProfilePage: React.FC = () => {
                                 {id === 'rentals' && rentals.length > 0 && (
                                     <span className="bg-green-500 text-white text-xs px-2 py-0.5 rounded-full">{rentals.length}</span>
                                 )}
-                            </button>
+                            </GoldButton>
                         ))}
                     </div>
 
@@ -266,13 +267,13 @@ export const ProfilePage: React.FC = () => {
                                 <div className="flex items-center justify-between mb-6">
                                     <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Thông tin cá nhân</h2>
                                     {!isEditing && (
-                                        <button
+                                        <GoldButton
                                             onClick={() => setIsEditing(true)}
-                                            className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg hover:bg-cyan-800"
+                                            className="flex items-center gap-2 px-4 py-2 rounded-lg"
                                         >
                                             <Edit2 className="w-4 h-4" />
                                             Chỉnh sửa
-                                        </button>
+                                        </GoldButton>
                                     )}
                                 </div>
 
@@ -373,38 +374,38 @@ export const ProfilePage: React.FC = () => {
 
                                 {isEditing && (
                                     <div className="flex gap-4">
-                                        <button
+                                        <GoldButton
                                             onClick={handleSaveProfile}
                                             disabled={loading}
-                                            className="flex items-center gap-2 px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50"
+                                            className="flex items-center gap-2 px-6 py-2 rounded-lg disabled:opacity-50"
                                         >
                                             <Save className="w-4 h-4" />
                                             Lưu thay đổi
-                                        </button>
-                                        <button
+                                        </GoldButton>
+                                        <GoldButton
                                             onClick={() => {
                                                 setIsEditing(false);
                                                 setEditedName(user.full_name);
                                                 setEditedPhone(user.phone || '');
                                             }}
-                                            className="flex items-center gap-2 px-6 py-2 bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-lg hover:bg-slate-300 dark:hover:bg-slate-600"
+                                            className="flex items-center gap-2 px-6 py-2 !bg-slate-200 !bg-none dark:!bg-slate-700 text-slate-700 dark:text-slate-300 rounded-lg hover:bg-slate-300 dark:hover:bg-slate-600"
                                         >
                                             <X className="w-4 h-4" />
                                             Hủy
-                                        </button>
+                                        </GoldButton>
                                     </div>
                                 )}
 
                                 <hr className="border-slate-200 dark:border-slate-700" />
 
                                 <div>
-                                    <button
+                                    <GoldButton
                                         onClick={() => setShowPasswordModal(true)}
-                                        className="flex items-center gap-2 px-6 py-2 bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-600"
+                                        className="flex items-center gap-2 px-6 py-2 !bg-slate-100 dark:!bg-slate-700 !bg-none text-slate-700 dark:text-slate-300 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-600"
                                     >
                                         <Lock className="w-4 h-4" />
                                         Đổi mật khẩu
-                                    </button>
+                                    </GoldButton>
                                 </div>
                             </div>
                         )}
@@ -439,16 +440,16 @@ export const ProfilePage: React.FC = () => {
                                                     description: '', // Optional
                                                     features: [] // Optional
                                                 }} />
-                                                <button
-                                                    onClick={(e) => {
+                                                <GoldButton
+                                                    onClick={(e: React.MouseEvent) => {
                                                         e.stopPropagation();
                                                         handleRemoveFavorite(fav.piano_id);
                                                     }}
-                                                    className="absolute top-2 right-2 p-2 bg-white/80 hover:bg-white text-red-500 rounded-full shadow-sm transition-colors z-10"
+                                                    className="absolute top-2 right-2 p-2 !bg-white/80 !bg-none hover:bg-white text-red-500 rounded-full shadow-sm transition-colors z-10"
                                                     title="Xóa khỏi yêu thích"
                                                 >
                                                     <X className="w-4 h-4" />
-                                                </button>
+                                                </GoldButton>
                                             </div>
                                         ))}
                                     </div>
@@ -510,12 +511,12 @@ export const ProfilePage: React.FC = () => {
                                                 <div className="text-right">
                                                     {getStatusBadge(order.status)}
                                                     {order.status === 'pending' && (
-                                                        <button
+                                                        <GoldButton
                                                             onClick={() => handleCancelOrder(order.id)}
-                                                            className="mt-2 text-sm text-red-600 hover:text-red-700 block ml-auto"
+                                                            className="mt-2 text-sm !bg-transparent !bg-none text-red-600 hover:text-red-700 block ml-auto"
                                                         >
                                                             Hủy đơn
-                                                        </button>
+                                                        </GoldButton>
                                                     )}
                                                     {order.status === 'rejected' && order.admin_notes && (
                                                         <p className="text-xs text-red-600 dark:text-red-400 mt-2">
@@ -613,18 +614,18 @@ export const ProfilePage: React.FC = () => {
                                                     </div>
 
                                                     <div className="flex md:flex-col justify-end gap-2 border-t md:border-t-0 md:border-l border-slate-200 dark:border-slate-700 pt-4 md:pt-0 md:pl-4 mt-2 md:mt-0">
-                                                        <button
+                                                        <GoldButton
                                                             onClick={() => navigate(`/piano/${rental.piano_id}`)}
-                                                            className="flex-1 md:flex-none px-4 py-2 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-600 text-sm font-medium"
+                                                            className="flex-1 md:flex-none px-4 py-2 !bg-white dark:!bg-slate-700 !bg-none border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-600 text-sm font-medium"
                                                         >
                                                             Xem chi tiết
-                                                        </button>
-                                                        <button
+                                                        </GoldButton>
+                                                        <GoldButton
                                                             onClick={() => navigate(`/piano/${rental.piano_id}`)}
-                                                            className="flex-1 md:flex-none px-4 py-2 bg-primary hover:bg-cyan-700 text-white rounded-lg text-sm font-medium shadow-sm transition-colors"
+                                                            className="flex-1 md:flex-none px-4 py-2 rounded-lg text-sm font-medium shadow-sm"
                                                         >
                                                             Gia hạn thêm
-                                                        </button>
+                                                        </GoldButton>
                                                     </div>
                                                 </div>
                                             )
@@ -642,12 +643,12 @@ export const ProfilePage: React.FC = () => {
                         <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl max-w-md w-full p-6">
                             <div className="flex items-center justify-between mb-6">
                                 <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Đổi mật khẩu</h2>
-                                <button
+                                <GoldButton
                                     onClick={() => setShowPasswordModal(false)}
-                                    className="text-slate-400 hover:text-slate-600"
+                                    className="!p-1 !bg-transparent !bg-none text-slate-400 hover:text-slate-600"
                                 >
                                     <X className="w-6 h-6" />
-                                </button>
+                                </GoldButton>
                             </div>
 
                             <div className="space-y-4">
@@ -677,13 +678,13 @@ export const ProfilePage: React.FC = () => {
                                     />
                                 </div>
 
-                                <button
+                                <GoldButton
                                     onClick={handleChangePassword}
                                     disabled={loading}
-                                    className="w-full bg-primary hover:bg-cyan-800 text-white py-3 px-6 rounded-lg font-semibold disabled:opacity-50"
+                                    className="w-full py-3 px-6 rounded-lg font-semibold disabled:opacity-50"
                                 >
                                     {loading ? 'Đang xử lý...' : 'Xác nhận đổi mật khẩu'}
-                                </button>
+                                </GoldButton>
                             </div>
                         </div>
                     </div>

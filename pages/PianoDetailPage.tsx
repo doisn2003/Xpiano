@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { GoldButton } from '../components/GoldButton';
 import { Heart, ShoppingCart, Calendar, Star, ArrowLeft, Clock, AlertCircle } from 'lucide-react';
 import pianoService, { Piano } from '../lib/pianoService';
 import favoriteService from '../lib/favoriteService';
@@ -53,11 +54,20 @@ export const PianoDetailPage: React.FC = () => {
             return;
         }
 
+        const numericId = Number(id);
+        // Optimistic update
+        const oldStatus = isFavorited;
+        setIsFavorited(!oldStatus);
+
         try {
-            const newStatus = await favoriteService.toggleFavorite(Number(id));
-            setIsFavorited(newStatus);
+            if (oldStatus) {
+                await favoriteService.removeFavorite(numericId);
+            } else {
+                await favoriteService.addFavorite(numericId);
+            }
         } catch (error: any) {
-            alert(error.message);
+            setIsFavorited(oldStatus); // Revert on error
+            console.error('Error toggling favorite:', error);
         }
     };
 
@@ -134,12 +144,12 @@ export const PianoDetailPage: React.FC = () => {
                     <div className="text-center">
                         <AlertCircle className="w-16 h-16 text-red-500 mx-auto mb-4" />
                         <p className="text-xl text-slate-700 dark:text-slate-300">{error}</p>
-                        <button
+                        <GoldButton
                             onClick={() => navigate('/')}
-                            className="mt-4 px-6 py-2 bg-primary text-white rounded-lg hover:bg-cyan-800"
+                            className="mt-4 px-6 py-2 rounded-lg"
                         >
                             Quay lại trang chủ
-                        </button>
+                        </GoldButton>
                     </div>
                 </div>
                 <Footer />
@@ -155,13 +165,13 @@ export const PianoDetailPage: React.FC = () => {
 
             <main className="flex-grow container mx-auto px-4 py-8">
                 {/* Back Button */}
-                <button
+                <GoldButton
                     onClick={() => navigate(-1)}
-                    className="flex items-center gap-2 text-slate-600 dark:text-slate-400 hover:text-primary mb-6"
+                    className="flex items-center gap-2 !bg-transparent !bg-none !p-0 text-slate-600 dark:text-slate-400 hover:text-primary mb-6 shadow-none"
                 >
                     <ArrowLeft className="w-5 h-5" />
                     <span>Quay lại</span>
-                </button>
+                </GoldButton>
 
                 {/* Piano Detail Card */}
                 <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-lg overflow-hidden">
@@ -175,17 +185,6 @@ export const PianoDetailPage: React.FC = () => {
                             />
 
                             {/* Favorite Button */}
-                            <button
-                                onClick={handleToggleFavorite}
-                                className="absolute top-4 right-4 p-3 rounded-full bg-white dark:bg-slate-700 shadow-lg hover:scale-110 transition-transform"
-                            >
-                                <Heart
-                                    className={`w-6 h-6 ${isFavorited
-                                            ? 'fill-red-500 text-red-500'
-                                            : 'text-slate-400'
-                                        }`}
-                                />
-                            </button>
                         </div>
 
                         {/* Info */}
@@ -196,9 +195,22 @@ export const PianoDetailPage: React.FC = () => {
                                 </span>
                             </div>
 
-                            <h1 className="text-3xl font-display font-bold text-slate-900 dark:text-white mb-4">
-                                {piano.name}
-                            </h1>
+                            <div className="flex justify-between items-start mb-4">
+                                <h1 className="text-3xl font-display font-bold text-slate-900 dark:text-white flex-1 pr-4">
+                                    {piano.name}
+                                </h1>
+                                <button
+                                    onClick={handleToggleFavorite}
+                                    className="p-2 rounded-full bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors focus:outline-none flex-shrink-0"
+                                >
+                                    <Heart
+                                        className={`w-6 h-6 ${isFavorited
+                                            ? 'fill-red-500 text-red-500'
+                                            : 'text-slate-400'
+                                            }`}
+                                    />
+                                </button>
+                            </div>
 
                             {/* Rating */}
                             <div className="flex items-center gap-2 mb-6">
@@ -207,8 +219,8 @@ export const PianoDetailPage: React.FC = () => {
                                         <Star
                                             key={i}
                                             className={`w-5 h-5 ${i < Math.floor(piano.rating)
-                                                    ? 'text-yellow-400 fill-yellow-400'
-                                                    : 'text-slate-300'
+                                                ? 'text-yellow-400 fill-yellow-400'
+                                                : 'text-slate-300'
                                                 }`}
                                         />
                                     ))}
@@ -259,20 +271,22 @@ export const PianoDetailPage: React.FC = () => {
 
                             {/* Action Buttons */}
                             <div className="grid grid-cols-2 gap-4">
-                                <button
+
+                                <GoldButton
                                     onClick={() => handleOpenModal('rent')}
-                                    className="flex items-center justify-center gap-2 bg-primary hover:bg-cyan-800 text-white py-3 px-6 rounded-lg font-semibold shadow-md hover:shadow-lg transition-all"
+                                    className="flex items-center justify-center gap-2 py-3 px-6 rounded-lg font-semibold shadow-md hover:shadow-lg transition-all"
                                 >
                                     <Calendar className="w-5 h-5" />
                                     Mượn đàn
-                                </button>
-                                <button
+                                </GoldButton>
+                                <GoldButton
                                     onClick={() => handleOpenModal('buy')}
-                                    className="flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 text-white py-3 px-6 rounded-lg font-semibold shadow-md hover:shadow-lg transition-all"
+                                    className="flex items-center justify-center gap-2 py-3 px-6 rounded-lg font-semibold shadow-md hover:shadow-lg transition-all"
                                 >
                                     <ShoppingCart className="w-5 h-5" />
                                     Mua đàn
-                                </button>
+                                </GoldButton>
+
                             </div>
                         </div>
                     </div>
@@ -302,14 +316,14 @@ export const PianoDetailPage: React.FC = () => {
                                         <h2 className="text-2xl font-bold text-slate-900 dark:text-white">
                                             {modalType === 'buy' ? 'Mua đàn' : 'Mượn đàn'}
                                         </h2>
-                                        <button
+                                        <GoldButton
                                             onClick={() => setShowModal(false)}
-                                            className="text-slate-400 hover:text-slate-600"
+                                            className="!bg-transparent !bg-none !p-0 text-slate-400 hover:text-slate-600 shadow-none"
                                         >
                                             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                                             </svg>
-                                        </button>
+                                        </GoldButton>
                                     </div>
 
                                     {modalType === 'rent' && (
@@ -364,13 +378,13 @@ export const PianoDetailPage: React.FC = () => {
                                         </div>
                                     </div>
 
-                                    <button
+                                    <GoldButton
                                         onClick={handlePlaceOrder}
                                         disabled={orderLoading || (modalType === 'rent' && (!rentalStartDate || !rentalEndDate || getRentalDays() < 1))}
-                                        className="w-full bg-primary hover:bg-cyan-800 text-white py-3 px-6 rounded-lg font-semibold shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
+                                        className="w-full py-3 px-6 rounded-lg font-semibold shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
                                     >
                                         {orderLoading ? 'Đang xử lý...' : 'Xác nhận đặt hàng'}
-                                    </button>
+                                    </GoldButton>
 
                                     <p className="text-xs text-slate-500 dark:text-slate-400 text-center mt-4">
                                         Đơn hàng sẽ được xét duyệt trong vòng 24h

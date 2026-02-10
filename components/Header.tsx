@@ -25,9 +25,9 @@ export const Header: React.FC = () => {
           {/* Logo */}
           <a href="/" className="flex items-center gap-2 group">
             <div className="w-10 h-10 rounded-full overflow-hidden shadow-lg group-hover:scale-105 transition-transform">
-              <img 
-                src="/logo.jpg" 
-                alt="Xpiano Logo" 
+              <img
+                src="/logo.jpg"
+                alt="Xpiano Logo"
                 className="w-full h-full object-cover"
               />
             </div>
@@ -38,9 +38,19 @@ export const Header: React.FC = () => {
 
           {/* Navigation - Desktop */}
           <nav className="hidden lg:flex items-center gap-8 font-medium text-sm text-slate-600 dark:text-slate-300">
-            {['Mua đàn', 'Mượn đàn', 'Học đàn', 'Đối tác', 'Về chúng tôi'].map((item) => (
-              <a key={item} href="#" className="hover:text-primary transition-colors">
-                {item}
+            {[
+              { name: 'Mua đàn', path: '/marketplace' },
+              { name: 'Mượn đàn', path: '/marketplace' },
+              { name: 'Học đàn', path: '/learn' }, // Assuming these pages exist or will exist; for now placeholders ok
+              { name: 'Đối tác', path: '/partners' },
+              { name: 'Về chúng tôi', path: '/about' }
+            ].map((item) => (
+              <a
+                key={item.name}
+                href={item.path}
+                className="hover:text-primary transition-colors focus:outline-none"
+              >
+                {item.name}
               </a>
             ))}
           </nav>
@@ -67,8 +77,8 @@ export const Header: React.FC = () => {
                   <button className="flex items-center gap-2 px-4 py-2 bg-slate-100 dark:bg-slate-700 rounded-full hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors">
                     <div className="w-6 h-6 rounded-full bg-gradient-to-br from-primary to-cyan-600 flex items-center justify-center text-white text-xs font-bold overflow-hidden">
                       {user.avatar_url ? (
-                        <img 
-                          src={user.avatar_url} 
+                        <img
+                          src={user.avatar_url}
                           alt={user.full_name}
                           className="w-full h-full object-cover"
                         />

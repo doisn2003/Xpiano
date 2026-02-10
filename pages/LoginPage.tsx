@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import { GoldButton } from '../components/GoldButton';
 import { useAuth } from '../contexts/AuthContext';
-import { Music, Lock, Mail, AlertCircle } from 'lucide-react';
+import { Music, Lock, Mail, AlertCircle, Eye, EyeOff } from 'lucide-react';
 
 export const LoginPage: React.FC = () => {
     const navigate = useNavigate();
@@ -11,6 +12,7 @@ export const LoginPage: React.FC = () => {
     const [error, setError] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const [loginMethod, setLoginMethod] = useState<'password' | 'otp'>('password');
+    const [showPassword, setShowPassword] = useState(false);
     const [role, setRole] = useState<'user' | 'teacher'>('user');
     const [otp, setOtp] = useState('');
     const [otpSent, setOtpSent] = useState(false);
@@ -72,24 +74,24 @@ export const LoginPage: React.FC = () => {
 
                 {/* Role Tabs */}
                 <div className="bg-[#1A1A1A] p-1 rounded-xl flex mb-6">
-                    <button
+                    <GoldButton
                         onClick={() => setRole('user')}
                         className={`flex-1 py-2 rounded-lg text-sm font-medium transition-all ${role === 'user'
-                            ? 'bg-[#111] text-[#F0C058] border border-[#F0C058]/30 shadow-sm'
-                            : 'text-slate-400 hover:text-slate-200'
+                            ? 'shadow-sm'
+                            : '!bg-[#111] !bg-none !text-slate-400 hover:!text-slate-200'
                             }`}
                     >
                         Khách/Học viên
-                    </button>
-                    <button
+                    </GoldButton>
+                    <GoldButton
                         onClick={() => setRole('teacher')}
                         className={`flex-1 py-2 rounded-lg text-sm font-medium transition-all ${role === 'teacher'
-                            ? 'bg-[#111] text-[#F0C058] border border-[#F0C058]/30 shadow-sm'
-                            : 'text-slate-400 hover:text-slate-200'
+                            ? 'shadow-sm'
+                            : '!bg-[#111] !bg-none !text-slate-400 hover:!text-slate-200'
                             }`}
                     >
                         Giáo viên
-                    </button>
+                    </GoldButton>
                 </div>
 
                 {/* Login Form */}
@@ -121,16 +123,20 @@ export const LoginPage: React.FC = () => {
                                 <div className="relative">
                                     <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500" />
                                     <input
-                                        type="password"
+                                        type={showPassword ? 'text' : 'password'}
                                         value={password}
                                         onChange={(e) => setPassword(e.target.value)}
                                         required
-                                        className="w-full pl-12 pr-4 py-3.5 rounded-xl border border-slate-700 bg-[#1A1A1A] text-white focus:ring-1 focus:ring-[#F0C058] focus:border-[#F0C058] transition-all placeholder:text-slate-600"
+                                        className="w-full pl-12 pr-12 py-3.5 rounded-xl border border-slate-700 bg-[#1A1A1A] text-white focus:ring-1 focus:ring-[#F0C058] focus:border-[#F0C058] transition-all placeholder:text-slate-600"
                                         placeholder="Mật khẩu"
                                     />
-                                    <button type="button" className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300">
-
-                                    </button>
+                                    <GoldButton
+                                        type="button"
+                                        onClick={() => setShowPassword(!showPassword)}
+                                        className="!absolute right-4 top-1/2 -translate-y-1/2 !bg-transparent !bg-none !p-0 text-slate-500 hover:text-slate-300 shadow-none border-none"
+                                    >
+                                        {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                                    </GoldButton>
                                 </div>
                             </div>
                         ) : (
@@ -144,14 +150,14 @@ export const LoginPage: React.FC = () => {
                                         className="w-full pl-4 pr-4 py-3.5 rounded-xl border border-slate-700 bg-[#1A1A1A] text-white focus:ring-1 focus:ring-[#F0C058] focus:border-[#F0C058] transition-all placeholder:text-slate-600"
                                         placeholder="Mã xác thực (OTP)"
                                     />
-                                    <button
+                                    <GoldButton
                                         type="button"
                                         onClick={handleSendOtp}
                                         disabled={isLoading || otpSent}
-                                        className="px-4 py-2 bg-[#F0C058] text-black font-medium rounded-xl hover:bg-[#d9ab4b] disabled:opacity-50 whitespace-nowrap"
+                                        className="px-4 py-2 font-medium rounded-xl disabled:opacity-50 whitespace-nowrap"
                                     >
                                         {otpSent ? 'Đã gửi' : 'Gửi mã'}
-                                    </button>
+                                    </GoldButton>
                                 </div>
                             </div>
                         )}
@@ -160,22 +166,22 @@ export const LoginPage: React.FC = () => {
                             <Link to="/forgot-password" className="text-slate-400 hover:text-[#F0C058] transition-colors">
                                 Quên mật khẩu?
                             </Link>
-                            <button
+                            <GoldButton
                                 type="button"
                                 onClick={() => setLoginMethod(loginMethod === 'password' ? 'otp' : 'password')}
-                                className="text-[#F0C058] hover:text-[#d9ab4b] font-medium transition-colors"
+                                className="!bg-transparent !bg-none text-[#F0C058] hover:text-[#d9ab4b] font-medium transition-colors !p-0"
                             >
                                 {loginMethod === 'password' ? 'Đăng nhập bằng OTP' : 'Đăng nhập bằng Mật khẩu'}
-                            </button>
+                            </GoldButton>
                         </div>
 
-                        <button
+                        <GoldButton
                             type="submit"
                             disabled={isLoading}
-                            className="w-full bg-gradient-to-r from-[#F0C058] to-[#d9ab4b] hover:from-[#E0B048] hover:to-[#c99b3b] text-[#111] py-3.5 rounded-xl font-bold shadow-lg shadow-[#F0C058]/20 hover:shadow-[#F0C058]/30 transition-all transform active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed mt-6 uppercase tracking-wide"
+                            className="w-full py-3.5 rounded-xl font-bold shadow-lg shadow-[#F0C058]/20 transition-all transform active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed mt-6 uppercase tracking-wide"
                         >
                             {isLoading ? 'Đang xử lý...' : 'Đăng nhập'}
-                        </button>
+                        </GoldButton>
                     </form>
 
                     <div className="mt-8 flex items-center gap-4">
@@ -185,18 +191,18 @@ export const LoginPage: React.FC = () => {
                     </div>
 
                     <div className="grid grid-cols-3 gap-4 mt-6">
-                        <button className="flex items-center justify-center py-3 bg-[#1A1A1A] border border-slate-700 rounded-full hover:bg-slate-800 transition-colors group">
+                        <GoldButton className="flex items-center justify-center py-3 !bg-[#1A1A1A] !bg-none border border-slate-700 rounded-full hover:!bg-slate-800 transition-colors group">
                             <span className="font-bold text-white">Google</span>
-                        </button>
-                        <button
+                        </GoldButton>
+                        <GoldButton
                             onClick={() => navigate('/login-admin')}
-                            className="flex items-center justify-center py-3 bg-[#1A1A1A] border border-slate-700 rounded-full hover:bg-slate-800 transition-colors"
+                            className="flex items-center justify-center py-3 !bg-[#1A1A1A] !bg-none border border-slate-700 rounded-full hover:!bg-slate-800 transition-colors"
                         >
                             <span className="font-bold text-white">Admin</span>
-                        </button>
-                        <button className="flex items-center justify-center py-3 bg-[#1A1A1A] border border-slate-700 rounded-full hover:bg-slate-800 transition-colors">
+                        </GoldButton>
+                        <GoldButton className="flex items-center justify-center py-3 !bg-[#1A1A1A] !bg-none border border-slate-700 rounded-full hover:!bg-slate-800 transition-colors">
                             <span className="font-bold text-white">iCloud</span>
-                        </button>
+                        </GoldButton>
                     </div>
 
                     <div className="mt-8 text-center">

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { GoldButton } from '../components/GoldButton';
 import {
     GraduationCap, BookOpen, Users, DollarSign, Plus, Calendar,
     Clock, MapPin, CheckCircle, XCircle, AlertCircle, Upload, Save, Edit2,
@@ -445,13 +446,13 @@ export const TeacherDashboard: React.FC = () => {
                                             className="flex-1 px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white"
                                             placeholder="VD: Piano, Lý thuyết nhạc..."
                                         />
-                                        <button
+                                        <GoldButton
                                             type="button"
                                             onClick={addSpecialization}
-                                            className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-cyan-700"
+                                            className="px-4 py-2 rounded-lg"
                                         >
                                             Thêm
-                                        </button>
+                                        </GoldButton>
                                     </div>
                                     <div className="flex flex-wrap gap-2">
                                         {profileForm.specializations.map((spec) => (
@@ -460,9 +461,9 @@ export const TeacherDashboard: React.FC = () => {
                                                 className="px-3 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 rounded-full text-sm flex items-center gap-2"
                                             >
                                                 {spec}
-                                                <button onClick={() => removeSpecialization(spec)} className="hover:text-red-600">
+                                                <GoldButton onClick={() => removeSpecialization(spec)} className="!p-0.5 !bg-transparent !bg-none hover:text-red-600">
                                                     ×
-                                                </button>
+                                                </GoldButton>
                                             </span>
                                         ))}
                                     </div>
@@ -564,13 +565,13 @@ export const TeacherDashboard: React.FC = () => {
                                                 className="flex-1 px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white"
                                                 placeholder="VD: Cầu Giấy, Ba Đình..."
                                             />
-                                            <button
+                                            <GoldButton
                                                 type="button"
                                                 onClick={addLocation}
-                                                className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-cyan-700"
+                                                className="px-4 py-2 rounded-lg"
                                             >
                                                 Thêm
-                                            </button>
+                                            </GoldButton>
                                         </div>
                                         <div className="flex flex-wrap gap-2">
                                             {profileForm.locations.map((loc) => (
@@ -579,9 +580,9 @@ export const TeacherDashboard: React.FC = () => {
                                                     className="px-3 py-1 bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300 rounded-full text-sm flex items-center gap-2"
                                                 >
                                                     {loc}
-                                                    <button onClick={() => removeLocation(loc)} className="hover:text-red-600">
+                                                    <GoldButton onClick={() => removeLocation(loc)} className="!p-0.5 !bg-transparent !bg-none hover:text-red-600">
                                                         ×
-                                                    </button>
+                                                    </GoldButton>
                                                 </span>
                                             ))}
                                         </div>
@@ -688,13 +689,13 @@ export const TeacherDashboard: React.FC = () => {
                                         {certificateUrls.map((url, i) => (
                                             <div key={i} className="relative group w-24 h-24 rounded-lg overflow-hidden border border-slate-300 dark:border-slate-600">
                                                 <img src={url} alt={`Cert ${i + 1}`} className="w-full h-full object-cover" />
-                                                <button
+                                                <GoldButton
                                                     type="button"
                                                     onClick={() => removeCertificateUrl(i)}
-                                                    className="absolute top-1 right-1 w-5 h-5 bg-red-500 text-white rounded-full text-xs flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                                                    className="absolute top-1 right-1 w-5 h-5 !p-0 !bg-red-500 !bg-none text-white rounded-full text-xs flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
                                                 >
                                                     ×
-                                                </button>
+                                                </GoldButton>
                                             </div>
                                         ))}
                                         <label className="w-24 h-24 rounded-lg border-2 border-dashed border-slate-300 dark:border-slate-600 flex flex-col items-center justify-center cursor-pointer hover:border-primary transition-colors">
@@ -759,13 +760,13 @@ export const TeacherDashboard: React.FC = () => {
                                     {videoDemoUrl ? (
                                         <div className="space-y-2">
                                             <video src={videoDemoUrl} controls className="w-full max-h-40 rounded-lg bg-black" />
-                                            <button
+                                            <GoldButton
                                                 type="button"
                                                 onClick={() => setVideoDemoUrl('')}
-                                                className="text-xs text-red-500 hover:text-red-700"
+                                                className="text-xs !bg-transparent !bg-none text-red-500 hover:text-red-700"
                                             >
                                                 Xóa video
-                                            </button>
+                                            </GoldButton>
                                         </div>
                                     ) : (
                                         <label className="flex flex-col items-center justify-center w-full h-28 border-2 border-dashed border-slate-300 dark:border-slate-600 rounded-lg cursor-pointer hover:border-primary transition-colors">
@@ -799,14 +800,14 @@ export const TeacherDashboard: React.FC = () => {
                             </div>
 
                             <div className="mt-8 flex justify-end gap-4">
-                                <button
+                                <GoldButton
                                     onClick={handleSubmitProfile}
                                     disabled={loading}
-                                    className="flex items-center gap-2 px-8 py-3 bg-primary text-white rounded-lg hover:bg-cyan-700 disabled:opacity-50 font-semibold"
+                                    className="flex items-center gap-2 px-8 py-3 rounded-lg disabled:opacity-50 font-semibold"
                                 >
                                     <Save className="w-5 h-5" />
                                     {loading ? 'Đang gửi...' : 'Gửi hồ sơ'}
-                                </button>
+                                </GoldButton>
                             </div>
                         </div>
                     ) : profile?.verification_status === 'pending' ? (
@@ -819,13 +820,13 @@ export const TeacherDashboard: React.FC = () => {
                             <p className="text-slate-600 dark:text-slate-400 mb-6">
                                 Admin đang xem xét hồ sơ của bạn. Quá trình này thường mất 24-48 giờ.
                             </p>
-                            <button
+                            <GoldButton
                                 onClick={() => setShowProfileForm(true)}
-                                className="px-6 py-2 border border-slate-300 dark:border-slate-600 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700 flex items-center gap-2 mx-auto"
+                                className="px-6 py-2 rounded-lg flex items-center gap-2 mx-auto"
                             >
                                 <Edit2 className="w-4 h-4" />
                                 Chỉnh sửa hồ sơ
-                            </button>
+                            </GoldButton>
                         </div>
                     ) : (
                         /* Approved - Show Dashboard */
@@ -877,13 +878,13 @@ export const TeacherDashboard: React.FC = () => {
                                     <h2 className="text-2xl font-bold text-slate-900 dark:text-white">
                                         Khóa học của tôi
                                     </h2>
-                                    <button
+                                    <GoldButton
                                         onClick={() => setShowCourseModal(true)}
-                                        className="flex items-center gap-2 px-6 py-2 bg-primary text-white rounded-lg hover:bg-cyan-700"
+                                        className="flex items-center gap-2 px-6 py-2 rounded-lg"
                                     >
                                         <Plus className="w-5 h-5" />
                                         Tạo khóa học mới
-                                    </button>
+                                    </GoldButton>
                                 </div>
 
                                 {courses.length === 0 ? (
@@ -921,11 +922,10 @@ export const TeacherDashboard: React.FC = () => {
                                                     </span>
                                                 </div>
                                                 <div className="mt-4 flex gap-2">
-                                                    <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                                                        course.is_online
+                                                    <span className={`px-3 py-1 rounded-full text-xs font-semibold ${course.is_online
                                                             ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300'
                                                             : 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300'
-                                                    }`}>
+                                                        }`}>
                                                         {course.is_online ? 'Online' : 'Offline'}
                                                     </span>
                                                     <span className="px-3 py-1 bg-slate-100 dark:bg-slate-700 rounded-full text-xs font-semibold text-slate-700 dark:text-slate-300">
@@ -1074,19 +1074,19 @@ export const TeacherDashboard: React.FC = () => {
                         </div>
 
                         <div className="flex gap-4 mt-6">
-                            <button
+                            <GoldButton
                                 onClick={handleCreateCourse}
                                 disabled={loading}
-                                className="flex-1 px-6 py-3 bg-primary text-white rounded-lg hover:bg-cyan-700 disabled:opacity-50 font-semibold"
+                                className="flex-1 px-6 py-3 rounded-lg disabled:opacity-50 font-semibold"
                             >
                                 {loading ? 'Đang tạo...' : 'Tạo khóa học'}
-                            </button>
-                            <button
+                            </GoldButton>
+                            <GoldButton
                                 onClick={() => setShowCourseModal(false)}
-                                className="px-6 py-3 border border-slate-300 dark:border-slate-600 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700"
+                                className="px-6 py-3 !bg-slate-200 dark:!bg-slate-700 !bg-none text-slate-700 dark:text-slate-300 rounded-lg"
                             >
                                 Hủy
-                            </button>
+                            </GoldButton>
                         </div>
                     </div>
                 </div>

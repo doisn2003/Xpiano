@@ -1,15 +1,72 @@
 import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Filter, ArrowRight, Loader2 } from 'lucide-react';
 import { ProductCard } from './ProductCard';
+import { GoldButton } from './GoldButton';
 import { CATEGORIES } from '../constants';
 import pianoService from '../lib/pianoService';
+import favoriteService from '../lib/favoriteService';
+import { useAuth } from '../contexts/AuthContext';
 import type { Piano } from '../types';
 
 export const Marketplace: React.FC = () => {
+  const { isAuthenticated } = useAuth();
+  const navigate = useNavigate();
   const [activeCategory, setActiveCategory] = React.useState('Tất cả');
   const [pianos, setPianos] = useState<Piano[]>([]);
+  const [favorites, setFavorites] = useState<Set<number>>(new Set());
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      favoriteService.getMyFavorites()
+        .then(favs => {
+          setFavorites(new Set(favs.map(f => Number(f.piano_id))));
+        })
+        .catch(console.error);
+    } else {
+      setFavorites(new Set());
+    }
+  }, [isAuthenticated]);
+
+  const handleToggleFavorite = async (id: number) => {
+    if (!isAuthenticated) {
+      navigate('/login');
+      return;
+    }
+
+    const isFav = favorites.has(id);
+    setFavorites(prev => {
+      const next = new Set(prev);
+      if (isFav) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
+
+    try {
+      if (isFav) {
+        await favoriteService.removeFavorite(id);
+      } else {
+        await favoriteService.addFavorite(id);
+      }
+    } catch (error) {
+      console.error(error);
+      // Revert on error
+      setFavorites(prev => {
+        const next = new Set(prev);
+        if (isFav) {
+          next.add(id);
+        } else {
+          next.delete(id);
+        }
+        return next;
+      });
+    }
+  };
 
   useEffect(() => {
     let isMounted = true;
@@ -95,20 +152,20 @@ export const Marketplace: React.FC = () => {
 
           <div className="flex overflow-x-auto pb-2 md:pb-0 gap-3 no-scrollbar mask-gradient-right">
             {CATEGORIES.map((cat) => (
-              <button
+              <GoldButton
                 key={cat}
                 onClick={() => setActiveCategory(cat)}
                 className={`px-5 py-2.5 rounded-xl text-sm font-medium whitespace-nowrap transition-all duration-200 ${activeCategory === cat
-                  ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-md'
-                  : 'bg-slate-100 dark:bg-slate-700/50 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
+                  ? 'shadow-md'
+                  : '!bg-slate-100 dark:!bg-slate-700/50 !bg-none text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
                   }`}
               >
                 {cat}
-              </button>
+              </GoldButton>
             ))}
-            <button className="bg-slate-100 dark:bg-slate-700/50 text-slate-600 dark:text-slate-300 px-5 py-2.5 rounded-xl text-sm font-medium whitespace-nowrap hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors flex items-center gap-2">
+            <GoldButton className="!bg-slate-100 dark:!bg-slate-700/50 !bg-none text-slate-600 dark:text-slate-300 px-5 py-2.5 rounded-xl text-sm font-medium whitespace-nowrap hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors flex items-center gap-2">
               Bộ lọc <Filter className="w-4 h-4" />
-            </button>
+            </GoldButton>
           </div>
         </div>
 
@@ -124,12 +181,12 @@ export const Marketplace: React.FC = () => {
         {error && (
           <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-6 text-center">
             <p className="text-red-800 dark:text-red-200">{error}</p>
-            <button
+            <GoldButton
               onClick={loadPianos}
-              className="mt-4 px-6 py-2 bg-primary hover:bg-cyan-700 text-white rounded-lg font-medium transition-colors"
+              className="mt-4 px-6 py-2 rounded-lg font-medium transition-colors"
             >
               Thử lại
-            </button>
+            </GoldButton>
           </div>
         )}
 
@@ -139,7 +196,12 @@ export const Marketplace: React.FC = () => {
             {pianos.length > 0 ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8">
                 {pianos.map((piano) => (
-                  <ProductCard key={piano.id} product={convertToProduct(piano)} />
+                  <ProductCard
+                    key={piano.id}
+                    product={convertToProduct(piano)}
+                    isFavorited={favorites.has(Number(piano.id))}
+                    onToggleFavorite={() => handleToggleFavorite(Number(piano.id))}
+                  />
                 ))}
               </div>
             ) : (
