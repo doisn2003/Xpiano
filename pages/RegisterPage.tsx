@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { Music, Lock, Mail, User as UserIcon, Phone, AlertCircle, CheckCircle } from 'lucide-react';
+import authService from '../lib/authService';
 
 export const RegisterPage: React.FC = () => {
     const navigate = useNavigate();
@@ -41,6 +42,7 @@ export const RegisterPage: React.FC = () => {
                 setError(res.message);
             }
         } catch (err) {
+            console.error('Send OTP Error:', err);
             setError('Không thể gửi mã.');
         } finally {
             setIsLoading(false);
@@ -95,7 +97,7 @@ export const RegisterPage: React.FC = () => {
                         Đăng ký tài khoản
                     </h1>
                     <p className="text-slate-400 text-sm">
-                        Tạo tài khoản để tham gia cộng đồng Spiano
+                        Tạo tài khoản để tham gia cộng đồng Xpiano
                     </p>
                 </div>
 
@@ -104,8 +106,8 @@ export const RegisterPage: React.FC = () => {
                     <button
                         onClick={() => setFormData({ ...formData, role: 'user' })}
                         className={`flex-1 py-2 rounded-lg text-sm font-medium transition-all ${formData.role === 'user'
-                                ? 'bg-[#111] text-[#F0C058] border border-[#F0C058]/30 shadow-sm'
-                                : 'text-slate-400 hover:text-slate-200'
+                            ? 'bg-[#111] text-[#F0C058] border border-[#F0C058]/30 shadow-sm'
+                            : 'text-slate-400 hover:text-slate-200'
                             }`}
                     >
                         Khách/Học viên
@@ -113,8 +115,8 @@ export const RegisterPage: React.FC = () => {
                     <button
                         onClick={() => setFormData({ ...formData, role: 'teacher' })}
                         className={`flex-1 py-2 rounded-lg text-sm font-medium transition-all ${formData.role === 'teacher'
-                                ? 'bg-[#111] text-[#F0C058] border border-[#F0C058]/30 shadow-sm'
-                                : 'text-slate-400 hover:text-slate-200'
+                            ? 'bg-[#111] text-[#F0C058] border border-[#F0C058]/30 shadow-sm'
+                            : 'text-slate-400 hover:text-slate-200'
                             }`}
                     >
                         Giáo viên

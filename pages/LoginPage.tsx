@@ -63,10 +63,10 @@ export const LoginPage: React.FC = () => {
                 {/* Logo */}
                 <div className="text-center mb-8">
                     <h1 className="text-4xl font-bold text-[#F0C058] tracking-widest mb-2 font-display">
-                        SPIANO
+                        Xpiano
                     </h1>
                     <p className="text-slate-400 text-sm">
-                        Học đàn & Cà phê
+                        Âm nhạc & nghệ thuật
                     </p>
                 </div>
 
@@ -186,13 +186,16 @@ export const LoginPage: React.FC = () => {
 
                     <div className="grid grid-cols-3 gap-4 mt-6">
                         <button className="flex items-center justify-center py-3 bg-[#1A1A1A] border border-slate-700 rounded-full hover:bg-slate-800 transition-colors group">
-                            <span className="font-bold text-white">G</span>
+                            <span className="font-bold text-white">Google</span>
+                        </button>
+                        <button
+                            onClick={() => navigate('/login-admin')}
+                            className="flex items-center justify-center py-3 bg-[#1A1A1A] border border-slate-700 rounded-full hover:bg-slate-800 transition-colors"
+                        >
+                            <span className="font-bold text-white">Admin</span>
                         </button>
                         <button className="flex items-center justify-center py-3 bg-[#1A1A1A] border border-slate-700 rounded-full hover:bg-slate-800 transition-colors">
-                            <span className="font-bold text-white"></span>
-                        </button>
-                        <button className="flex items-center justify-center py-3 bg-[#1A1A1A] border border-slate-700 rounded-full hover:bg-slate-800 transition-colors">
-                            <span className="font-bold text-white">💬</span>
+                            <span className="font-bold text-white">iCloud</span>
                         </button>
                     </div>
 

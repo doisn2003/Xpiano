@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import authService from '../lib/authService';
 import { Music, Mail, AlertCircle, CheckCircle, ArrowLeft } from 'lucide-react';
 

@@ -125,6 +125,60 @@ class UserService {
             throw error;
         }
     }
+
+    /**
+     * Get all teacher profiles (Admin only)
+     */
+    async getTeacherProfiles(status?: 'pending' | 'approved' | 'rejected') {
+        try {
+            const params = status ? { verification_status: status } : {};
+            const response = await api.get('/users/teacher-profiles', { params });
+            if (response.data.success) {
+                return response.data.data;
+            }
+            return [];
+        } catch (error: any) {
+            console.error('Error fetching teacher profiles:', error);
+            throw error;
+        }
+    }
+
+    /**
+     * Approve teacher profile (Admin only)
+     */
+    async approveTeacher(teacherId: string): Promise<void> {
+        try {
+            await api.put(`/users/teacher-profiles/${teacherId}/approve`);
+        } catch (error: any) {
+            console.error('Error approving teacher:', error);
+            throw new Error(error.response?.data?.message || 'Không thể phê duyệt giáo viên');
+        }
+    }
+
+    /**
+     * Reject teacher profile (Admin only)
+     */
+    async rejectTeacher(teacherId: string, reason: string): Promise<void> {
+        try {
+            await api.put(`/users/teacher-profiles/${teacherId}/reject`, { rejected_reason: reason });
+        } catch (error: any) {
+            console.error('Error rejecting teacher:', error);
+            throw new Error(error.response?.data?.message || 'Không thể từ chối giáo viên');
+        }
+    }
+
+    /**
+     * Revoke teacher approval - Cancel contract (Admin only)
+     * Teacher can resubmit profile after fixing issues
+     */
+    async revokeTeacher(teacherId: string, reason: string): Promise<void> {
+        try {
+            await api.put(`/users/teacher-profiles/${teacherId}/revoke`, { revoke_reason: reason });
+        } catch (error: any) {
+            console.error('Error revoking teacher:', error);
+            throw new Error(error.response?.data?.message || 'Không thể hủy hợp đồng giáo viên');
+        }
+    }
 }
 
 export default new UserService();
