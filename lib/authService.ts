@@ -57,8 +57,8 @@ class AuthService {
             const response = await api.post('/auth/login', credentials);
 
             if (response.data.success) {
-                const { user, token } = response.data.data;
-                this.setSession(user, token);
+                const { user, token, refresh_token, expires_at } = response.data.data;
+                this.setSession(user, token, refresh_token, expires_at);
                 return response.data;
             }
 
@@ -123,8 +123,8 @@ class AuthService {
             const response = await api.post('/auth/register-verify', data);
 
             if (response.data.success) {
-                const { user, token } = response.data.data;
-                this.setSession(user, token);
+                const { user, token, refresh_token, expires_at } = response.data.data;
+                this.setSession(user, token, refresh_token, expires_at);
                 return response.data; // Return full response for handling
             }
 
@@ -146,8 +146,8 @@ class AuthService {
             const response = await api.post('/auth/login-otp', { email, token });
 
             if (response.data.success) {
-                const { user, token: accessToken } = response.data.data;
-                this.setSession(user, accessToken);
+                const { user, token: accessToken, refresh_token, expires_at } = response.data.data;
+                this.setSession(user, accessToken, refresh_token, expires_at);
                 return response.data;
             }
 
@@ -173,8 +173,8 @@ class AuthService {
             const response = await api.post('/auth/admin-login', credentials);
 
             if (response.data.success) {
-                const { user, token } = response.data.data;
-                this.setSession(user, token);
+                const { user, token, refresh_token, expires_at } = response.data.data;
+                this.setSession(user, token, refresh_token, expires_at);
                 return response.data;
             }
 
@@ -303,11 +303,56 @@ class AuthService {
     }
 
     /**
+     * Refresh the access token using refresh_token
+     */
+    async refreshAccessToken(): Promise<boolean> {
+        try {
+            const refreshToken = localStorage.getItem('refresh_token');
+            if (!refreshToken) {
+                console.log('No refresh token available');
+                return false;
+            }
+
+            const response = await api.post('/auth/refresh', { refresh_token: refreshToken });
+            
+            if (response.data.success) {
+                const { token, refresh_token, expires_at } = response.data.data;
+                localStorage.setItem('token', token);
+                localStorage.setItem('refresh_token', refresh_token);
+                if (expires_at) {
+                    localStorage.setItem('token_expires_at', expires_at.toString());
+                }
+                console.log('Token refreshed successfully');
+                return true;
+            }
+            return false;
+        } catch (error) {
+            console.error('Failed to refresh token:', error);
+            // Clear session on refresh failure
+            this.clearSession();
+            return false;
+        }
+    }
+
+    /**
+     * Get refresh token
+     */
+    getRefreshToken(): string | null {
+        return localStorage.getItem('refresh_token');
+    }
+
+    /**
      * Helper to set session
      */
-    private setSession(user: User, token: string) {
+    private setSession(user: User, token: string, refreshToken?: string, expiresAt?: number) {
         localStorage.setItem('user', JSON.stringify(user));
         localStorage.setItem('token', token);
+        if (refreshToken) {
+            localStorage.setItem('refresh_token', refreshToken);
+        }
+        if (expiresAt) {
+            localStorage.setItem('token_expires_at', expiresAt.toString());
+        }
         // Trigger event if needed, or use a state manager like Context/Redux
         window.dispatchEvent(new Event('auth-change'));
     }
@@ -318,6 +363,8 @@ class AuthService {
     private clearSession() {
         localStorage.removeItem('user');
         localStorage.removeItem('token');
+        localStorage.removeItem('refresh_token');
+        localStorage.removeItem('token_expires_at');
         window.dispatchEvent(new Event('auth-change'));
     }
     /**

@@ -1,13 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { GoldButton } from '../components/GoldButton';
-import { Heart, ShoppingCart, Calendar, Star, ArrowLeft, Clock, AlertCircle } from 'lucide-react';
+import { Heart, ShoppingCart, Calendar, Star, ArrowLeft, Clock, AlertCircle, CreditCard } from 'lucide-react';
 import pianoService, { Piano } from '../lib/pianoService';
 import favoriteService from '../lib/favoriteService';
-import orderService from '../lib/orderService';
+import orderService, { OrderResponse } from '../lib/orderService';
 import { useAuth } from '../contexts/AuthContext';
 import { Header } from '../components/Header';
 import { Footer } from '../components/Footer';
+import { PaymentModal } from '../components/PaymentModal';
 
 export const PianoDetailPage: React.FC = () => {
     const { id } = useParams<{ id: string }>();
@@ -20,12 +21,35 @@ export const PianoDetailPage: React.FC = () => {
     const [error, setError] = useState('');
 
     // Buy/Rent Modal State
-    const [showModal, setShowModal] = useState(false);
+    const [showPaymentModal, setShowPaymentModal] = useState(false);
     const [modalType, setModalType] = useState<'buy' | 'rent'>('buy');
     const [rentalStartDate, setRentalStartDate] = useState('');
     const [rentalEndDate, setRentalEndDate] = useState('');
-    const [orderLoading, setOrderLoading] = useState(false);
-    const [orderSuccess, setOrderSuccess] = useState(false);
+    
+    // Pending order state - for resuming QR payment
+    const [pendingOrder, setPendingOrder] = useState<OrderResponse | null>(null);
+
+    // Load pending order from localStorage on mount
+    useEffect(() => {
+        const storedOrder = localStorage.getItem(`pendingOrder_${id}`);
+        if (storedOrder) {
+            try {
+                const order = JSON.parse(storedOrder) as OrderResponse;
+                // Check if order is still valid (not expired)
+                if (order.payment_expired_at) {
+                    const expiredAt = new Date(order.payment_expired_at).getTime();
+                    if (Date.now() < expiredAt) {
+                        setPendingOrder(order);
+                    } else {
+                        // Expired - remove from localStorage
+                        localStorage.removeItem(`pendingOrder_${id}`);
+                    }
+                }
+            } catch (e) {
+                localStorage.removeItem(`pendingOrder_${id}`);
+            }
+        }
+    }, [id]);
 
     useEffect(() => {
         loadPianoDetails();
@@ -71,14 +95,69 @@ export const PianoDetailPage: React.FC = () => {
         }
     };
 
+    // State for showing rental date selection modal before payment
+    const [showRentalModal, setShowRentalModal] = useState(false);
+
     const handleOpenModal = (type: 'buy' | 'rent') => {
         if (!isAuthenticated) {
             navigate('/login');
             return;
         }
         setModalType(type);
-        setShowModal(true);
-        setOrderSuccess(false);
+        
+        if (type === 'rent') {
+            // Show rental date selection first
+            setShowRentalModal(true);
+        } else {
+            // Go directly to payment modal for buy
+            setShowPaymentModal(true);
+        }
+    };
+
+    const handleProceedToPayment = () => {
+        if (modalType === 'rent' && (!rentalStartDate || !rentalEndDate || getRentalDays() < 1)) {
+            alert('Vui lòng chọn ngày thuê hợp lệ');
+            return;
+        }
+        setShowRentalModal(false);
+        setShowPaymentModal(true);
+    };
+
+    const handlePaymentSuccess = () => {
+        setPendingOrder(null); // Clear pending order on success
+        localStorage.removeItem(`pendingOrder_${id}`); // Clear from localStorage
+        navigate('/profile');
+    };
+
+    // Handle when a new QR order is created
+    const handleOrderCreated = (order: OrderResponse) => {
+        setPendingOrder(order);
+        // Save to localStorage for persistence across page reloads
+        localStorage.setItem(`pendingOrder_${id}`, JSON.stringify(order));
+    };
+
+    // Handle when pending order is cleared (expired or user resets)
+    const handleOrderCleared = () => {
+        setPendingOrder(null);
+        localStorage.removeItem(`pendingOrder_${id}`);
+    };
+
+    // Check if there's a valid pending order (not expired)
+    const hasPendingPayment = () => {
+        if (!pendingOrder || pendingOrder.payment_method !== 'QR' || !pendingOrder.payment_expired_at) {
+            return false;
+        }
+        const expiredAt = new Date(pendingOrder.payment_expired_at).getTime();
+        return Date.now() < expiredAt;
+    };
+
+    // Handle clicking "Thanh toán" button to resume payment
+    const handleResumePayment = () => {
+        if (!isAuthenticated) {
+            navigate('/login');
+            return;
+        }
+        setShowPaymentModal(true);
     };
 
     const calculateRentalPrice = () => {
@@ -97,31 +176,6 @@ export const PianoDetailPage: React.FC = () => {
         const start = new Date(rentalStartDate);
         const end = new Date(rentalEndDate);
         return Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
-    };
-
-    const handlePlaceOrder = async () => {
-        if (!piano) return;
-
-        try {
-            setOrderLoading(true);
-
-            await orderService.createOrder({
-                piano_id: piano.id,
-                type: modalType,
-                rental_start_date: modalType === 'rent' ? rentalStartDate : undefined,
-                rental_end_date: modalType === 'rent' ? rentalEndDate : undefined,
-            });
-
-            setOrderSuccess(true);
-            setTimeout(() => {
-                setShowModal(false);
-                navigate('/profile');
-            }, 2000);
-        } catch (error: any) {
-            alert(error.message || 'Đặt hàng thất bại');
-        } finally {
-            setOrderLoading(false);
-        }
     };
 
     if (loading) {
@@ -273,129 +327,131 @@ export const PianoDetailPage: React.FC = () => {
 
                             {/* Action Buttons */}
                             <div className="grid grid-cols-2 gap-4">
-
-                                <GoldButton
-                                    onClick={() => handleOpenModal('rent')}
-                                    className="flex items-center justify-center gap-2 py-3 px-6 rounded-lg font-semibold shadow-md hover:shadow-lg transition-all"
-                                >
-                                    <Calendar className="w-5 h-5" />
-                                    Mượn đàn
-                                </GoldButton>
-                                <GoldButton
-                                    onClick={() => handleOpenModal('buy')}
-                                    className="flex items-center justify-center gap-2 py-3 px-6 rounded-lg font-semibold shadow-md hover:shadow-lg transition-all"
-                                >
-                                    <ShoppingCart className="w-5 h-5" />
-                                    Mua đàn
-                                </GoldButton>
-
+                                {hasPendingPayment() ? (
+                                    // Show single "Thanh toán" button when there's a pending QR payment
+                                    <GoldButton
+                                        onClick={handleResumePayment}
+                                        className="col-span-2 flex items-center justify-center gap-2 py-3 px-6 rounded-lg font-semibold shadow-md hover:shadow-lg transition-all bg-green-600 hover:bg-green-700"
+                                    >
+                                        <CreditCard className="w-5 h-5" />
+                                        Tiếp tục thanh toán
+                                    </GoldButton>
+                                ) : (
+                                    // Normal buttons
+                                    <>
+                                        <GoldButton
+                                            onClick={() => handleOpenModal('rent')}
+                                            className="flex items-center justify-center gap-2 py-3 px-6 rounded-lg font-semibold shadow-md hover:shadow-lg transition-all"
+                                        >
+                                            <Calendar className="w-5 h-5" />
+                                            Mượn đàn
+                                        </GoldButton>
+                                        <GoldButton
+                                            onClick={() => handleOpenModal('buy')}
+                                            className="flex items-center justify-center gap-2 py-3 px-6 rounded-lg font-semibold shadow-md hover:shadow-lg transition-all"
+                                        >
+                                            <ShoppingCart className="w-5 h-5" />
+                                            Mua đàn
+                                        </GoldButton>
+                                    </>
+                                )}
                             </div>
                         </div>
                     </div>
                 </div>
 
-                {/* Buy/Rent Modal */}
-                {showModal && (
+                {/* Rental Date Selection Modal */}
+                {showRentalModal && (
                     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
                         <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl max-w-md w-full p-6">
-                            {orderSuccess ? (
-                                <div className="text-center py-8">
-                                    <div className="w-16 h-16 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
-                                        <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                                        </svg>
-                                    </div>
-                                    <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">
-                                        Đặt hàng thành công!
-                                    </h3>
-                                    <p className="text-slate-600 dark:text-slate-400">
-                                        Đơn hàng của bạn đang chờ xét duyệt. Chúng tôi sẽ liên hệ sớm nhất!
-                                    </p>
+                            <div className="flex items-center justify-between mb-6">
+                                <h2 className="text-2xl font-bold text-slate-900 dark:text-white">
+                                    Chọn thời gian thuê
+                                </h2>
+                                <GoldButton
+                                    onClick={() => setShowRentalModal(false)}
+                                    className="!bg-transparent !bg-none !p-0 text-slate-400 hover:text-slate-600 shadow-none"
+                                >
+                                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                    </svg>
+                                </GoldButton>
+                            </div>
+
+                            <div className="space-y-4 mb-6">
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                                        Ngày bắt đầu
+                                    </label>
+                                    <input
+                                        type="date"
+                                        value={rentalStartDate}
+                                        onChange={(e) => setRentalStartDate(e.target.value)}
+                                        min={new Date().toISOString().split('T')[0]}
+                                        className="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white"
+                                    />
                                 </div>
-                            ) : (
-                                <>
-                                    <div className="flex items-center justify-between mb-6">
-                                        <h2 className="text-2xl font-bold text-slate-900 dark:text-white">
-                                            {modalType === 'buy' ? 'Mua đàn' : 'Mượn đàn'}
-                                        </h2>
-                                        <GoldButton
-                                            onClick={() => setShowModal(false)}
-                                            className="!bg-transparent !bg-none !p-0 text-slate-400 hover:text-slate-600 shadow-none"
-                                        >
-                                            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                                            </svg>
-                                        </GoldButton>
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                                        Ngày kết thúc
+                                    </label>
+                                    <input
+                                        type="date"
+                                        value={rentalEndDate}
+                                        onChange={(e) => setRentalEndDate(e.target.value)}
+                                        min={rentalStartDate || new Date().toISOString().split('T')[0]}
+                                        className="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white"
+                                    />
+                                </div>
+                                {rentalStartDate && rentalEndDate && getRentalDays() > 0 && (
+                                    <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg">
+                                        <p className="text-sm text-blue-800 dark:text-blue-300 mb-1">
+                                            Thời gian thuê: <span className="font-bold">{getRentalDays()} ngày</span>
+                                        </p>
+                                        {getRentalDays() >= 3 && (
+                                            <p className="text-xs text-green-600 dark:text-green-400">
+                                                🎉 Giảm {getRentalDays() >= 8 ? '15%' : '10%'} cho thuê dài hạn!
+                                            </p>
+                                        )}
                                     </div>
+                                )}
+                            </div>
 
-                                    {modalType === 'rent' && (
-                                        <div className="space-y-4 mb-6">
-                                            <div>
-                                                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                                                    Ngày bắt đầu
-                                                </label>
-                                                <input
-                                                    type="date"
-                                                    value={rentalStartDate}
-                                                    onChange={(e) => setRentalStartDate(e.target.value)}
-                                                    min={new Date().toISOString().split('T')[0]}
-                                                    className="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white"
-                                                />
-                                            </div>
-                                            <div>
-                                                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                                                    Ngày kết thúc
-                                                </label>
-                                                <input
-                                                    type="date"
-                                                    value={rentalEndDate}
-                                                    onChange={(e) => setRentalEndDate(e.target.value)}
-                                                    min={rentalStartDate || new Date().toISOString().split('T')[0]}
-                                                    className="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white"
-                                                />
-                                            </div>
-                                            {rentalStartDate && rentalEndDate && getRentalDays() > 0 && (
-                                                <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg">
-                                                    <p className="text-sm text-blue-800 dark:text-blue-300 mb-1">
-                                                        Thời gian thuê: <span className="font-bold">{getRentalDays()} ngày</span>
-                                                    </p>
-                                                    {getRentalDays() >= 3 && (
-                                                        <p className="text-xs text-green-600 dark:text-green-400">
-                                                            🎉 Giảm {getRentalDays() >= 8 ? '15%' : '10%'} cho thuê dài hạn!
-                                                        </p>
-                                                    )}
-                                                </div>
-                                            )}
-                                        </div>
-                                    )}
+                            <div className="bg-slate-100 dark:bg-slate-700 p-4 rounded-lg mb-6">
+                                <div className="flex justify-between items-center">
+                                    <span className="text-slate-600 dark:text-slate-400">Tổng cộng:</span>
+                                    <span className="text-2xl font-bold text-primary">
+                                        {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(calculateRentalPrice())}
+                                    </span>
+                                </div>
+                            </div>
 
-                                    <div className="bg-slate-100 dark:bg-slate-700 p-4 rounded-lg mb-6">
-                                        <div className="flex justify-between items-center">
-                                            <span className="text-slate-600 dark:text-slate-400">Tổng cộng:</span>
-                                            <span className="text-2xl font-bold text-primary">
-                                                {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(
-                                                    modalType === 'buy' ? buyPrice : calculateRentalPrice()
-                                                )}
-                                            </span>
-                                        </div>
-                                    </div>
-
-                                    <GoldButton
-                                        onClick={handlePlaceOrder}
-                                        disabled={orderLoading || (modalType === 'rent' && (!rentalStartDate || !rentalEndDate || getRentalDays() < 1))}
-                                        className="w-full py-3 px-6 rounded-lg font-semibold shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
-                                    >
-                                        {orderLoading ? 'Đang xử lý...' : 'Xác nhận đặt hàng'}
-                                    </GoldButton>
-
-                                    <p className="text-xs text-slate-500 dark:text-slate-400 text-center mt-4">
-                                        Đơn hàng sẽ được xét duyệt trong vòng 24h
-                                    </p>
-                                </>
-                            )}
+                            <GoldButton
+                                onClick={handleProceedToPayment}
+                                disabled={!rentalStartDate || !rentalEndDate || getRentalDays() < 1}
+                                className="w-full py-3 px-6 rounded-lg font-semibold shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                                Tiếp tục thanh toán
+                            </GoldButton>
                         </div>
                     </div>
                 )}
+
+                {/* Payment Modal */}
+                <PaymentModal
+                    isOpen={showPaymentModal}
+                    onClose={() => setShowPaymentModal(false)}
+                    orderType={pendingOrder?.type || modalType}
+                    pianoId={piano.id}
+                    pianoName={piano.name}
+                    totalPrice={pendingOrder?.total_price || (modalType === 'buy' ? buyPrice : calculateRentalPrice())}
+                    rentalStartDate={pendingOrder?.rental_start_date || (modalType === 'rent' ? rentalStartDate : undefined)}
+                    rentalEndDate={pendingOrder?.rental_end_date || (modalType === 'rent' ? rentalEndDate : undefined)}
+                    onSuccess={handlePaymentSuccess}
+                    pendingOrder={pendingOrder}
+                    onOrderCreated={handleOrderCreated}
+                    onOrderCleared={handleOrderCleared}
+                />
             </main>
 
             <Footer />
