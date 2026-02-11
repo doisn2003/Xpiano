@@ -1,7 +1,9 @@
 import React from 'react';
-import { Mail, ArrowRight } from 'lucide-react';
+import { Mail, ArrowRight, ArrowLeft } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 export const PartnersPage: React.FC = () => {
+    const navigate = useNavigate();
     return (
         <div className="relative min-h-screen flex items-center justify-center overflow-hidden">
             {/* Background Image with Overlay */}
@@ -13,12 +15,14 @@ export const PartnersPage: React.FC = () => {
                     backgroundPosition: 'center',
                 }}
             >
-                <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm"></div>
+                <div className="absolute inset-0 bg-slate-900/30"></div>
             </div>
 
             {/* Content */}
             <div className="relative z-10 container mx-auto px-4 text-center">
-                <div className="max-w-3xl mx-auto bg-black/30 backdrop-blur-xl p-8 md:p-12 rounded-3xl border border-white/10 shadow-2xl animate-fade-in-up">
+
+
+                <div className="max-w-3xl mx-auto bg-black/30 backdrop-blur-xl p-8 md:p-12 rounded-3xl border border-white/10 shadow-2xl animate-fade-in-up mt-12 md:mt-0">
                     <h1 className="text-4xl md:text-5xl font-display font-bold text-white mb-6">
                         Đối Tác Của Xpiano
                     </h1>
@@ -44,7 +48,15 @@ export const PartnersPage: React.FC = () => {
                         </div>
                     </div>
                 </div>
+                
             </div>
+            <button
+                    onClick={() => navigate('/')}
+                    className="absolute top-4 left-4 md:top-8 md:left-8 group flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 text-white rounded-full transition-all duration-300 border border-white/30 hover:border-white/50 backdrop-blur-md"
+                >
+                    <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
+                    <span>Trang chủ</span>
+                </button>
         </div>
     );
 };
