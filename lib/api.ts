@@ -1,4 +1,4 @@
-import axios from 'axios';
+import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios';
 
 // Create Axios instance
 const api = axios.create({
@@ -8,22 +8,28 @@ const api = axios.create({
     },
 });
 
+// Track if we're currently refreshing to avoid infinite loops
+let isRefreshing = false;
+let failedQueue: Array<{
+    resolve: (value?: unknown) => void;
+    reject: (reason?: unknown) => void;
+}> = [];
+
+const processQueue = (error: Error | null, token: string | null = null) => {
+    failedQueue.forEach(prom => {
+        if (error) {
+            prom.reject(error);
+        } else {
+            prom.resolve(token);
+        }
+    });
+    failedQueue = [];
+};
+
 // Request interceptor to add Auth Token
 api.interceptors.request.use(
     (config) => {
-        // Get token from localStorage (or where authService stores it)
-        // We need to be careful about circular dependencies if we import authService here
-        // So we'll read directly from localStorage or similar mechanism
         try {
-            const sessionStr = localStorage.getItem('sb-pjgjusdmzxrhgiptfvbg-auth-token'); // Supabase default key pattern?
-            // Or checking how authService stores it. 
-            // In the NEW authService, we will store the session/token explicitly.
-            // Let's assume we store 'auth_token' or use the supabase session.
-
-            // However, if we are completely replacing Supabase Client in Frontend for Auth, 
-            // we should store our own token.
-            // We don't strictly need 'user' object to be present to send the token.
-            // The token is the source of truth for authorization.
             const token = localStorage.getItem('token');
             if (token) {
                 config.headers.Authorization = `Bearer ${token}`;
@@ -38,15 +44,90 @@ api.interceptors.request.use(
     }
 );
 
-// Response interceptor
+// Response interceptor with token refresh
 api.interceptors.response.use(
     (response) => response,
-    (error) => {
-        if (error.response?.status === 401) {
-            // Handle unauthorized (e.g., logout or refresh token)
-            // For 3-tier simple auth, maybe just clear storage and redirect
-            // window.location.href = '/login'; // simplified
+    async (error: AxiosError) => {
+        const originalRequest = error.config as InternalAxiosRequestConfig & { _retry?: boolean };
+        
+        // Only attempt refresh on 401 errors and if we haven't already retried
+        if (error.response?.status === 401 && !originalRequest._retry) {
+            // Don't try to refresh if this IS a refresh request (avoid infinite loop)
+            if (originalRequest.url?.includes('/auth/refresh')) {
+                return Promise.reject(error);
+            }
+
+            if (isRefreshing) {
+                // If already refreshing, queue this request
+                return new Promise((resolve, reject) => {
+                    failedQueue.push({ resolve, reject });
+                }).then(token => {
+                    originalRequest.headers.Authorization = `Bearer ${token}`;
+                    return api(originalRequest);
+                }).catch(err => {
+                    return Promise.reject(err);
+                });
+            }
+
+            originalRequest._retry = true;
+            isRefreshing = true;
+
+            const refreshToken = localStorage.getItem('refresh_token');
+            
+            if (!refreshToken) {
+                isRefreshing = false;
+                // No refresh token, clear session
+                localStorage.removeItem('token');
+                localStorage.removeItem('user');
+                localStorage.removeItem('refresh_token');
+                window.dispatchEvent(new Event('auth-change'));
+                return Promise.reject(error);
+            }
+
+            try {
+                const response = await axios.post(
+                    `${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/auth/refresh`,
+                    { refresh_token: refreshToken }
+                );
+
+                if (response.data.success) {
+                    const { token, refresh_token: newRefreshToken, expires_at } = response.data.data;
+                    
+                    // Update stored tokens
+                    localStorage.setItem('token', token);
+                    localStorage.setItem('refresh_token', newRefreshToken);
+                    if (expires_at) {
+                        localStorage.setItem('token_expires_at', expires_at.toString());
+                    }
+
+                    // Update the original request with new token
+                    originalRequest.headers.Authorization = `Bearer ${token}`;
+                    
+                    // Process any queued requests
+                    processQueue(null, token);
+                    
+                    isRefreshing = false;
+                    
+                    // Retry the original request
+                    return api(originalRequest);
+                } else {
+                    throw new Error('Refresh failed');
+                }
+            } catch (refreshError) {
+                processQueue(refreshError as Error, null);
+                isRefreshing = false;
+                
+                // Clear session on refresh failure
+                localStorage.removeItem('token');
+                localStorage.removeItem('user');
+                localStorage.removeItem('refresh_token');
+                localStorage.removeItem('token_expires_at');
+                window.dispatchEvent(new Event('auth-change'));
+                
+                return Promise.reject(error);
+            }
         }
+
         return Promise.reject(error);
     }
 );
