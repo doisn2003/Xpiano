@@ -14,6 +14,9 @@ import { AdminDashboard } from './pages/AdminDashboard';
 import { TeacherDashboard } from './pages/TeacherDashboard';
 import { LoginAdmin } from './pages/LoginAdmin';
 import { MarketplacePage } from './pages/MarketplacePage';
+import { LearnPage } from './pages/LearnPage';
+import { PartnersPage } from './pages/PartnersPage';
+import { AboutPage } from './pages/AboutPage';
 
 function HomePage() {
   return (
@@ -43,6 +46,9 @@ function App() {
             <Route path="/login" element={<LoginPage />} />
             <Route path="/register" element={<RegisterPage />} />
             <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+            <Route path="/learn" element={<LearnPage />} />
+            <Route path="/partners" element={<PartnersPage />} />
+            <Route path="/about" element={<AboutPage />} />
             <Route path="/login-admin" element={<LoginAdmin />} />
           </Routes>
         </div>
