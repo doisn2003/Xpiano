@@ -5,6 +5,7 @@ import { useAuth } from '../contexts/AuthContext';
 
 export const Header: React.FC = () => {
   const [isDarkMode, setIsDarkMode] = React.useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
   const { user, isAuthenticated, logout } = useAuth();
   const navigate = useNavigate();
 
@@ -165,11 +166,38 @@ export const Header: React.FC = () => {
               {isDarkMode ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
             </button>
 
-            <button className="lg:hidden p-2 text-slate-600 dark:text-slate-300">
+            <button
+              className="lg:hidden p-2 text-slate-600 dark:text-slate-300"
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            >
               <Menu className="w-6 h-6" />
             </button>
           </div>
         </div>
+
+        {/* Mobile Navigation Menu */}
+        {isMobileMenuOpen && (
+          <div className="lg:hidden mt-4 pb-4 border-t border-slate-200 dark:border-slate-700 pt-4 animate-in slide-in-from-top-2 duration-200">
+            <nav className="flex flex-col gap-4 font-medium text-sm text-slate-600 dark:text-slate-300">
+              {[
+                { name: 'Mua đàn', path: '/marketplace' },
+                { name: 'Mượn đàn', path: '/marketplace' },
+                { name: 'Học đàn', path: '/learn' },
+                { name: 'Đối tác', path: '/partners' },
+                { name: 'Về chúng tôi', path: '/about' }
+              ].map((item) => (
+                <a
+                  key={item.name}
+                  href={item.path}
+                  className="hover:text-primary transition-colors focus:outline-none py-2 px-2 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
+                  {item.name}
+                </a>
+              ))}
+            </nav>
+          </div>
+        )}
       </div>
     </header>
   );
