@@ -17,6 +17,8 @@ import { MarketplacePage } from './pages/MarketplacePage';
 import { LearnPage } from './pages/LearnPage';
 import { PartnersPage } from './pages/PartnersPage';
 import { AboutPage } from './pages/AboutPage';
+import WalletPage from './pages/WalletPage';
+import AdminWithdrawalsPage from './pages/AdminWithdrawalsPage';
 
 function HomePage() {
   return (
@@ -50,6 +52,8 @@ function App() {
             <Route path="/partners" element={<PartnersPage />} />
             <Route path="/about" element={<AboutPage />} />
             <Route path="/login-admin" element={<LoginAdmin />} />
+            <Route path="/wallet" element={<WalletPage />} />
+            <Route path="/admin/withdrawals" element={<AdminWithdrawalsPage />} />
           </Routes>
         </div>
       </AuthProvider>
