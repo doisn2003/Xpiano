@@ -19,6 +19,16 @@ import { PartnersPage } from './pages/PartnersPage';
 import { AboutPage } from './pages/AboutPage';
 import WalletPage from './pages/WalletPage';
 import AdminWithdrawalsPage from './pages/AdminWithdrawalsPage';
+import { useAffiliateTracking } from './hooks/useAffiliateTracking';
+
+/**
+ * Component nội bộ – phải nằm BÊN TRONG <BrowserRouter> để dùng useSearchParams
+ * Chạy hook tracking trên mọi page, không render gì cả
+ */
+function AffiliateTracker() {
+  useAffiliateTracking();
+  return null;
+}
 
 function HomePage() {
   return (
@@ -38,6 +48,8 @@ function App() {
     <BrowserRouter>
       <AuthProvider>
         <div className="min-h-screen flex flex-col font-body">
+          {/* Luôn chạy – bắt ?ref= từ URL và lưu vào localStorage */}
+          <AffiliateTracker />
           <Routes>
             <Route path="/" element={<HomePage />} />
             <Route path="/marketplace" element={<MarketplacePage />} />
