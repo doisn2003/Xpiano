@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { GoldButton } from '../components/GoldButton';
-import { User, Heart, ShoppingBag, Calendar, Edit2, Lock, Save, X, Camera } from 'lucide-react';
+import { User, Heart, ShoppingBag, Calendar, Edit2, Lock, Save, X, Camera, Users } from 'lucide-react';
 import uploadService from '../lib/uploadService';
 import { useAuth } from '../contexts/AuthContext';
 import { Header } from '../components/Header';
@@ -10,12 +10,13 @@ import { ProductCard } from '../components/ProductCard';
 import favoriteService, { FavoriteWithPiano } from '../lib/favoriteService';
 import orderService, { OrderWithDetails } from '../lib/orderService';
 import userService from '../lib/userService';
+import AffiliateDashboard from '../components/Affiliate/AffiliateDashboard';
 
 export const ProfilePage: React.FC = () => {
     const { user, isAuthenticated, isLoading: authLoading, refreshUser } = useAuth();
     const navigate = useNavigate();
 
-    const [activeTab, setActiveTab] = useState<'info' | 'favorites' | 'orders' | 'rentals'>('info');
+    const [activeTab, setActiveTab] = useState<'info' | 'favorites' | 'orders' | 'rentals' | 'affiliate'>('info');
     const [isEditing, setIsEditing] = useState(false);
     const [editedName, setEditedName] = useState('');
     const [editedPhone, setEditedPhone] = useState('');
@@ -238,6 +239,7 @@ export const ProfilePage: React.FC = () => {
                             { id: 'favorites', label: 'Yêu thích', icon: Heart },
                             { id: 'orders', label: 'Đơn hàng', icon: ShoppingBag },
                             { id: 'rentals', label: 'Đang mượn', icon: Calendar },
+                            { id: 'affiliate', label: '🤝 Affiliate', icon: Users },
                         ].map(({ id, label, icon: Icon }) => (
                             <GoldButton
                                 key={id}
@@ -632,6 +634,16 @@ export const ProfilePage: React.FC = () => {
                                         })}
                                     </div>
                                 )}
+                            </div>
+                        )}
+
+                        {/* Affiliate Tab */}
+                        {activeTab === 'affiliate' && (
+                            <div>
+                                <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-6">
+                                    Chương trình Affiliate
+                                </h2>
+                                <AffiliateDashboard />
                             </div>
                         )}
                     </div>

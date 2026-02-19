@@ -4,7 +4,7 @@ import { GoldButton } from '../components/GoldButton';
 import {
     LayoutDashboard, Package, ShoppingBag, Users, Plus, Edit2, Trash2,
     Check, X, Search, Filter, TrendingUp, GraduationCap, AlertCircle, CheckCircle, XCircle,
-    ImageIcon, Upload
+    ImageIcon, Upload, DollarSign
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { Header } from '../components/Header';
@@ -14,12 +14,13 @@ import pianoService, { Piano } from '../lib/pianoService';
 import orderService, { OrderWithDetails } from '../lib/orderService';
 import userService from '../lib/userService';
 import uploadService from '../lib/uploadService';
+import AdminCommissions from '../components/Admin/AdminCommissions';
 
 export const AdminDashboard: React.FC = () => {
     const { user, isAuthenticated, isLoading: authLoading } = useAuth();
     const navigate = useNavigate();
 
-    const [activeTab, setActiveTab] = useState<'overview' | 'pianos' | 'orders' | 'users' | 'teachers'>('overview');
+    const [activeTab, setActiveTab] = useState<'overview' | 'pianos' | 'orders' | 'users' | 'teachers' | 'commissions'>('overview');
 
     // Data
     const [pianos, setPianos] = useState<Piano[]>([]);
@@ -357,6 +358,7 @@ export const AdminDashboard: React.FC = () => {
                             { id: 'orders', label: 'Đơn hàng', icon: ShoppingBag },
                             { id: 'users', label: 'Người dùng', icon: Users },
                             { id: 'teachers', label: 'Giáo viên', icon: GraduationCap },
+                            { id: 'commissions', label: '💰 Hoa hồng', icon: DollarSign },
                         ].map(({ id, label, icon: Icon }) => (
                             <GoldButton
                                 key={id}
@@ -699,8 +701,8 @@ export const AdminDashboard: React.FC = () => {
                                                                     }}
                                                                     disabled={!isApproved}
                                                                     className={`text-sm font-medium px-3 py-1.5 rounded border transition-colors ${isApproved
-                                                                            ? '!bg-red-50 !bg-none border-red-100 text-red-600 hover:bg-red-100'
-                                                                            : '!bg-slate-100 !bg-none border-slate-200 text-slate-400 cursor-not-allowed opacity-60'
+                                                                        ? '!bg-red-50 !bg-none border-red-100 text-red-600 hover:bg-red-100'
+                                                                        : '!bg-slate-100 !bg-none border-slate-200 text-slate-400 cursor-not-allowed opacity-60'
                                                                         }`}
                                                                 >
                                                                     Hủy hợp đồng
@@ -714,6 +716,11 @@ export const AdminDashboard: React.FC = () => {
                                     </div>
                                 )}
                             </div>
+                        )}
+
+                        {/* Commissions Tab */}
+                        {activeTab === 'commissions' && (
+                            <AdminCommissions />
                         )}
                     </div>
                 </div>
