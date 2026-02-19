@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { GoldButton } from '../components/GoldButton';
-import { useAuth } from '../contexts/AuthContext';
+// import { useAuth } from '../contexts/AuthContext'; // Unused login destructuring
+import authService from '../lib/authService';
 import { Music, Lock, Mail, AlertCircle, Eye, EyeOff } from 'lucide-react';
 
 export const LoginPage: React.FC = () => {
     const navigate = useNavigate();
-    const { login } = useAuth();
+    // const { login } = useAuth();
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
@@ -45,12 +46,42 @@ export const LoginPage: React.FC = () => {
         setIsLoading(true);
 
         try {
+            let res;
             if (loginMethod === 'password') {
-                await login(email, password);
+                res = await authService.login({ email, password });
             } else {
                 // Login with OTP
-                await authService.loginOtp(email, otp);
+                res = await authService.loginOtp(email, otp);
             }
+
+            if (!res.success) {
+                setError(res.message);
+                return;
+            }
+
+            const user = res.data.user;
+
+            // 1. Block Admins/Warehouse Owners from this page
+            if (user.role === 'admin' || user.role === 'warehouse_owner') {
+                // Logout immediately to clear the invalid session
+                await authService.logout();
+                setError('Tài khoản quản trị vui lòng đăng nhập tại trang dành cho Admin.');
+                return;
+            }
+
+            // 2. Enforce Role Selection (Teacher vs User)
+            if (role === 'teacher' && user.role !== 'teacher') {
+                await authService.logout();
+                setError('Tài khoản này không phải là Giáo viên. Vui lòng chọn tab "Khách/Học viên".');
+                return;
+            }
+
+            if (role === 'user' && user.role === 'teacher') {
+                await authService.logout();
+                setError('Đây là tài khoản Giáo viên. Vui lòng chọn tab "Giáo viên".');
+                return;
+            }
+
             navigate(role === 'teacher' ? '/teacher-dashboard' : '/'); // Redirect based on role
         } catch (err: any) {
             setError(err.response?.data?.message || 'Đăng nhập thất bại. Vui lòng thử lại.');
