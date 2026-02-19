@@ -47,6 +47,22 @@ export const TeacherDashboard: React.FC = () => {
     const [specializationInput, setSpecializationInput] = useState('');
     const [locationInput, setLocationInput] = useState('');
 
+    /**
+     * Parse a value that might be a JS array or a PostgreSQL array string.
+     * PG returns arrays as `{"a","b"}` strings when fetched via REST in some cases.
+     * This ensures we always get a proper JS string[].
+     */
+    const parseArrayField = (val: any): string[] => {
+        if (Array.isArray(val)) return val as string[];
+        if (typeof val === 'string' && val.startsWith('{') && val.endsWith('}')) {
+            const inner = val.slice(1, -1);
+            if (!inner) return [];
+            // Split by comma, but respect quoted values
+            return inner.split(',').map(s => s.replace(/^"|"$/g, '').trim()).filter(Boolean);
+        }
+        return [];
+    };
+
     // File upload state
     const [avatarUrl, setAvatarUrl] = useState('');
     const [videoDemoUrl, setVideoDemoUrl] = useState('');
@@ -96,17 +112,17 @@ export const TeacherDashboard: React.FC = () => {
                 // Pre-fill form with existing data
                 setProfileForm({
                     full_name: profileData.full_name || '',
-                    specializations: profileData.specializations || [],
+                    specializations: parseArrayField(profileData.specializations),
                     years_experience: profileData.years_experience || 0,
                     bio: profileData.bio || '',
-                    teach_online: profileData.teach_online,
-                    teach_offline: profileData.teach_offline,
-                    locations: profileData.locations || [],
+                    teach_online: profileData.teach_online ?? true,
+                    teach_offline: profileData.teach_offline ?? false,
+                    locations: parseArrayField(profileData.locations),
                     price_online: profileData.price_online || 0,
                     price_offline: profileData.price_offline || 0,
                     bundle_8_discount: profileData.bundle_8_discount || '10',
                     bundle_12_discount: profileData.bundle_12_discount || '15',
-                    allow_trial_lesson: profileData.allow_trial_lesson,
+                    allow_trial_lesson: profileData.allow_trial_lesson ?? true,
                     id_number: profileData.id_number || '',
                     bank_name: profileData.bank_name || '',
                     bank_account: profileData.bank_account || '',
@@ -115,7 +131,7 @@ export const TeacherDashboard: React.FC = () => {
                 });
                 setAvatarUrl(profileData.avatar_url || '');
                 setVideoDemoUrl(profileData.video_demo_url || '');
-                setCertificateUrls(profileData.certificate_urls || []);
+                setCertificateUrls(parseArrayField(profileData.certificate_urls));
             }
         } catch (err: any) {
             setError(err.message);
@@ -923,8 +939,8 @@ export const TeacherDashboard: React.FC = () => {
                                                 </div>
                                                 <div className="mt-4 flex gap-2">
                                                     <span className={`px-3 py-1 rounded-full text-xs font-semibold ${course.is_online
-                                                            ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300'
-                                                            : 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300'
+                                                        ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300'
+                                                        : 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300'
                                                         }`}>
                                                         {course.is_online ? 'Online' : 'Offline'}
                                                     </span>
