@@ -35,7 +35,7 @@ export const CreatePostModal: React.FC<CreatePostModalProps> = ({
 }) => {
     const [content, setContent] = useState('');
     const [visibility, setVisibility] = useState('public');
-    const [postType, setPostType] = useState<'text' | 'image' | 'video' | 'performance'>('text');
+    const [postType, setPostType] = useState<'general' | 'course_review' | 'performance' | 'tip'>('general');
     const [loading, setLoading] = useState(false);
     const [showVisibility, setShowVisibility] = useState(false);
 
@@ -52,7 +52,7 @@ export const CreatePostModal: React.FC<CreatePostModalProps> = ({
                 onCreated(res.data);
                 setContent('');
                 setVisibility('public');
-                setPostType('text');
+                setPostType('general');
                 onClose();
             }
         } finally {
@@ -117,8 +117,8 @@ export const CreatePostModal: React.FC<CreatePostModalProps> = ({
                                                 key={opt.value}
                                                 onClick={() => { setVisibility(opt.value); setShowVisibility(false); }}
                                                 className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm transition-colors ${visibility === opt.value
-                                                        ? 'bg-primary/10 text-primary'
-                                                        : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700'
+                                                    ? 'bg-primary/10 text-primary'
+                                                    : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700'
                                                     }`}
                                             >
                                                 <opt.icon className="w-4 h-4" />
@@ -150,17 +150,17 @@ export const CreatePostModal: React.FC<CreatePostModalProps> = ({
                 <div className="flex items-center gap-2 px-5 pb-3">
                     <span className="text-xs text-slate-400 dark:text-slate-500 mr-1">Loại:</span>
                     {[
-                        { value: 'text', label: 'Văn bản', icon: '📝' },
-                        { value: 'image', label: 'Hình ảnh', icon: '🖼️' },
-                        { value: 'video', label: 'Video', icon: '🎬' },
+                        { value: 'general', label: 'Chung', icon: '📝' },
+                        { value: 'course_review', label: 'Đánh giá', icon: '⭐' },
                         { value: 'performance', label: 'Trình diễn', icon: '🎹' },
+                        { value: 'tip', label: 'Mẹo hay', icon: '💡' },
                     ].map(t => (
                         <button
                             key={t.value}
                             onClick={() => setPostType(t.value as any)}
                             className={`px-2.5 py-1 rounded-full text-xs font-medium transition-all ${postType === t.value
-                                    ? 'bg-primary/10 text-primary border border-primary/30'
-                                    : 'bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-600'
+                                ? 'bg-primary/10 text-primary border border-primary/30'
+                                : 'bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-600'
                                 }`}
                         >
                             {t.icon} {t.label}

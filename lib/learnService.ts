@@ -16,7 +16,7 @@ export interface Post {
     user_id: string;
     content: string;
     media_urls: string[];
-    post_type: 'text' | 'video' | 'image' | 'performance';
+    post_type: 'general' | 'course_review' | 'performance' | 'tip';
     visibility: 'public' | 'followers' | 'private';
     likes_count: number;
     comments_count: number;
@@ -79,7 +79,7 @@ class LearnService {
         try {
             const params: any = { limit };
             if (cursor) params.cursor = cursor;
-            const res = await api.get('/posts', { params });
+            const res = await api.get('/posts/feed', { params });
             return res.data;
         } catch (error: any) {
             return { success: false, data: [], message: error.response?.data?.message || 'Lỗi tải bài viết' };
@@ -128,7 +128,7 @@ class LearnService {
 
     async likePost(postId: string) {
         try {
-            const res = await api.post(`/social/posts/${postId}/like`);
+            const res = await api.post(`/posts/${postId}/like`);
             return res.data;
         } catch (error: any) {
             return { success: false, message: error.response?.data?.message || 'Lỗi like' };
@@ -137,7 +137,7 @@ class LearnService {
 
     async unlikePost(postId: string) {
         try {
-            const res = await api.delete(`/social/posts/${postId}/like`);
+            const res = await api.delete(`/posts/${postId}/like`);
             return res.data;
         } catch (error: any) {
             return { success: false, message: error.response?.data?.message || 'Lỗi unlike' };
@@ -148,7 +148,7 @@ class LearnService {
         try {
             const params: any = { limit };
             if (cursor) params.cursor = cursor;
-            const res = await api.get(`/social/posts/${postId}/comments`, { params });
+            const res = await api.get(`/posts/${postId}/comments`, { params });
             return res.data;
         } catch (error: any) {
             return { success: false, data: [], message: error.response?.data?.message || 'Lỗi tải bình luận' };
@@ -157,7 +157,7 @@ class LearnService {
 
     async createComment(postId: string, content: string) {
         try {
-            const res = await api.post(`/social/posts/${postId}/comments`, { content });
+            const res = await api.post(`/posts/${postId}/comments`, { content });
             return res.data;
         } catch (error: any) {
             return { success: false, message: error.response?.data?.message || 'Lỗi gửi bình luận' };
@@ -210,6 +210,15 @@ class LearnService {
             return res.data;
         } catch (error: any) {
             return { success: false, data: [], message: error.response?.data?.message };
+        }
+    }
+
+    async searchUsers(query: string): Promise<{ success: boolean; data?: any[]; message?: string }> {
+        try {
+            const res = await api.get('/social/users/search', { params: { q: query } });
+            return res.data;
+        } catch (error: any) {
+            return { success: false, data: [], message: error.response?.data?.message || 'Lỗi tìm kiếm' };
         }
     }
 
