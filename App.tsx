@@ -19,6 +19,7 @@ import { PartnersPage } from './pages/PartnersPage';
 import { AboutPage } from './pages/AboutPage';
 import WalletPage from './pages/WalletPage';
 import AdminWithdrawalsPage from './pages/AdminWithdrawalsPage';
+import CooperationPage from './pages/CooperationPage';
 import { useAffiliateTracking } from './hooks/useAffiliateTracking';
 
 /**
@@ -66,6 +67,7 @@ function App() {
             <Route path="/login-admin" element={<LoginAdmin />} />
             <Route path="/wallet" element={<WalletPage />} />
             <Route path="/admin/withdrawals" element={<AdminWithdrawalsPage />} />
+            <Route path="/cooperation" element={<CooperationPage />} />
           </Routes>
         </div>
       </AuthProvider>
