@@ -97,6 +97,10 @@ class SocketService {
 
     // ---- Emit events ----
 
+    emit(event: string, data?: any): void {
+        this.socket?.emit(event, data);
+    }
+
     joinConversations(conversationIds: string[]): void {
         this.socket?.emit('join_conversations', conversationIds);
     }

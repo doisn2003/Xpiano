@@ -8,11 +8,13 @@ import { MessagingPanel } from '../components/learn/MessagingPanel';
 import { ClassroomHub } from '../components/learn/ClassroomHub';
 import { MyStats } from '../components/learn/MyStats';
 import { NotificationBell } from '../components/learn/NotificationBell';
+import { LiveRoom } from '../components/learn/LiveRoom';
 import socketService from '../lib/socketService';
 
 export const LearnPage: React.FC = () => {
     const { user, isAuthenticated } = useAuth();
     const [activeTab, setActiveTab] = useState<LearnTab>('feed');
+    const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
     const navigate = useNavigate();
 
     // Connect socket once when user is authenticated
@@ -45,13 +47,25 @@ export const LearnPage: React.FC = () => {
             case 'messages':
                 return <MessagingPanel currentUserId={user?.id} />;
             case 'classrooms':
-                return <ClassroomHub currentUserId={user?.id} />;
+                return <ClassroomHub currentUserId={user?.id} userRole={user?.role} onJoinLive={(id) => setActiveSessionId(id)} />;
             case 'stats':
                 return <MyStats currentUserId={user?.id} />;
             default:
                 return null;
         }
     };
+
+    // Full-screen LiveRoom overlay
+    if (activeSessionId) {
+        return (
+            <LiveRoom
+                sessionId={activeSessionId}
+                currentUserId={user?.id || ''}
+                userRole={user?.role}
+                onLeave={() => setActiveSessionId(null)}
+            />
+        );
+    }
 
     return (
         <div className="min-h-screen bg-slate-50 dark:bg-slate-900 transition-colors">
