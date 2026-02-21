@@ -6,9 +6,11 @@ import orderService, { OrderResponse, PaymentMethod, BankInfo } from '../lib/ord
 interface PaymentModalProps {
     isOpen: boolean;
     onClose: () => void;
-    orderType: 'buy' | 'rent';
-    pianoId: number;
-    pianoName: string;
+    orderType: 'buy' | 'rent' | 'course';
+    pianoId?: number;
+    courseId?: string;
+    pianoName?: string;
+    courseName?: string;
     totalPrice: number;
     rentalStartDate?: string;
     rentalEndDate?: string;
@@ -26,7 +28,9 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
     onClose,
     orderType,
     pianoId,
+    courseId,
     pianoName,
+    courseName,
     totalPrice,
     rentalStartDate,
     rentalEndDate,
@@ -77,7 +81,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
             const expiredAt = new Date(order.payment_expired_at!).getTime();
             const now = Date.now();
             const remaining = Math.max(0, Math.floor((expiredAt - now) / 1000));
-            
+
             setTimeLeft(remaining);
 
             if (remaining <= 0) {
@@ -108,8 +112,8 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
             } catch (error: any) {
                 console.error('Error checking status:', error);
                 // Check if it's an auth error (401)
-                if (error.message?.includes('401') || 
-                    error.message?.includes('không hợp lệ') || 
+                if (error.message?.includes('401') ||
+                    error.message?.includes('không hợp lệ') ||
                     error.message?.includes('hết hạn')) {
                     setAuthError(true);
                 }
@@ -118,7 +122,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
 
         // Check immediately on mount
         checkStatus();
-        
+
         const interval = setInterval(checkStatus, 5000); // Check every 5 seconds
         return () => clearInterval(interval);
     }, [step, order]);
@@ -148,6 +152,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
         try {
             const orderData = {
                 piano_id: pianoId,
+                course_id: courseId,
                 type: orderType,
                 rental_start_date: rentalStartDate,
                 rental_end_date: rentalEndDate,
@@ -182,15 +187,15 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
     // Handle cancel order
     const handleCancelOrder = async () => {
         if (!order?.id) return;
-        
+
         setCancelling(true);
         try {
             await orderService.cancelOrder(order.id);
             setStep('cancelled');
         } catch (error: any) {
             // Check if it's an auth error
-            if (error.message?.includes('401') || 
-                error.message?.includes('không hợp lệ') || 
+            if (error.message?.includes('401') ||
+                error.message?.includes('không hợp lệ') ||
                 error.message?.includes('hết hạn')) {
                 setAuthError(true);
                 alert('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại để hủy đơn hàng.');
@@ -231,10 +236,10 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                             {/* Order Summary */}
                             <div className="bg-slate-50 dark:bg-slate-700/50 p-4 rounded-xl mb-6">
                                 <p className="text-sm text-slate-600 dark:text-slate-400 mb-2">
-                                    Đơn hàng: <span className="font-semibold text-slate-900 dark:text-white">{pianoName}</span>
+                                    Đơn hàng: <span className="font-semibold text-slate-900 dark:text-white">{pianoName || courseName}</span>
                                 </p>
                                 <p className="text-sm text-slate-600 dark:text-slate-400">
-                                    Loại: <span className="font-semibold">{orderType === 'buy' ? 'Mua' : 'Thuê'}</span>
+                                    Loại: <span className="font-semibold">{orderType === 'buy' ? 'Mua' : orderType === 'rent' ? 'Thuê' : 'Khóa học'}</span>
                                 </p>
                                 <div className="mt-3 pt-3 border-t border-slate-200 dark:border-slate-600">
                                     <div className="flex justify-between items-center">
@@ -248,11 +253,10 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                             <div className="space-y-3 mb-6">
                                 <button
                                     onClick={() => setPaymentMethod('COD')}
-                                    className={`w-full p-4 rounded-xl border-2 transition-all flex items-center gap-4 ${
-                                        paymentMethod === 'COD'
+                                    className={`w-full p-4 rounded-xl border-2 transition-all flex items-center gap-4 ${paymentMethod === 'COD'
                                             ? 'border-primary bg-primary/5'
                                             : 'border-slate-200 dark:border-slate-600 hover:border-slate-300'
-                                    }`}
+                                        }`}
                                 >
                                     <div className={`p-3 rounded-full ${paymentMethod === 'COD' ? 'bg-primary/10' : 'bg-slate-100 dark:bg-slate-700'}`}>
                                         <Banknote className={`w-6 h-6 ${paymentMethod === 'COD' ? 'text-primary' : 'text-slate-500'}`} />
@@ -272,11 +276,10 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
 
                                 <button
                                     onClick={() => setPaymentMethod('QR')}
-                                    className={`w-full p-4 rounded-xl border-2 transition-all flex items-center gap-4 ${
-                                        paymentMethod === 'QR'
+                                    className={`w-full p-4 rounded-xl border-2 transition-all flex items-center gap-4 ${paymentMethod === 'QR'
                                             ? 'border-primary bg-primary/5'
                                             : 'border-slate-200 dark:border-slate-600 hover:border-slate-300'
-                                    }`}
+                                        }`}
                                 >
                                     <div className={`p-3 rounded-full ${paymentMethod === 'QR' ? 'bg-primary/10' : 'bg-slate-100 dark:bg-slate-700'}`}>
                                         <QrCode className={`w-6 h-6 ${paymentMethod === 'QR' ? 'text-primary' : 'text-slate-500'}`} />
@@ -318,7 +321,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
 
                             {/* Progress bar */}
                             <div className="w-full h-2 bg-slate-200 dark:bg-slate-700 rounded-full mb-6 overflow-hidden">
-                                <div 
+                                <div
                                     className="h-full bg-primary transition-all duration-1000"
                                     style={{ width: `${(timeLeft / 3600) * 100}%` }}
                                 />
@@ -328,9 +331,9 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                             {order.qr_url && (
                                 <div className="flex justify-center mb-6">
                                     <div className="bg-white p-4 rounded-xl shadow-lg">
-                                        <img 
-                                            src={order.qr_url} 
-                                            alt="QR Code thanh toán" 
+                                        <img
+                                            src={order.qr_url}
+                                            alt="QR Code thanh toán"
                                             className="w-64 h-64 object-contain"
                                         />
                                     </div>
@@ -343,26 +346,26 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                                     <h4 className="font-semibold text-slate-900 dark:text-white mb-3">
                                         Thông tin chuyển khoản:
                                     </h4>
-                                    
-                                    <InfoRow 
+
+                                    <InfoRow
                                         label="Ngân hàng"
                                         value={order.bank_info.bank_name}
                                         onCopy={() => handleCopy(order.bank_info!.bank_name, 'bank')}
                                         copied={copied === 'bank'}
                                     />
-                                    <InfoRow 
+                                    <InfoRow
                                         label="Số tài khoản"
                                         value={order.bank_info.account_number}
                                         onCopy={() => handleCopy(order.bank_info!.account_number, 'account')}
                                         copied={copied === 'account'}
                                     />
-                                    <InfoRow 
+                                    <InfoRow
                                         label="Số tiền"
                                         value={formatCurrency(order.bank_info.amount)}
                                         onCopy={() => handleCopy(order.bank_info!.amount.toString(), 'amount')}
                                         copied={copied === 'amount'}
                                     />
-                                    <InfoRow 
+                                    <InfoRow
                                         label="Nội dung CK"
                                         value={order.bank_info.description}
                                         onCopy={() => handleCopy(order.bank_info!.description, 'description')}
@@ -421,7 +424,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                                 {paymentMethod === 'QR' ? 'Thanh toán thành công!' : 'Đặt hàng thành công!'}
                             </h3>
                             <p className="text-slate-600 dark:text-slate-400 mb-6">
-                                {paymentMethod === 'QR' 
+                                {paymentMethod === 'QR'
                                     ? 'Chúng tôi đã nhận được thanh toán và sẽ xử lý đơn hàng của bạn sớm nhất.'
                                     : 'Đơn hàng của bạn đang chờ xét duyệt. Chúng tôi sẽ liên hệ sớm nhất!'
                                 }

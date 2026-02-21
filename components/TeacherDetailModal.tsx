@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, Check, XCircle, Award, Calendar, Mail, Phone, BookOpen, User, FileImage, Video } from 'lucide-react';
+import { X, Check, XCircle, Award, Calendar, Mail, Phone, BookOpen, User, FileImage, Video, Maximize2, Download } from 'lucide-react';
 import { GoldButton } from './GoldButton';
 
 interface TeacherDetailModalProps {
@@ -19,6 +19,25 @@ export const TeacherDetailModal: React.FC<TeacherDetailModalProps> = ({
 }) => {
     const [rejectReason, setRejectReason] = useState('');
     const [showRejectInput, setShowRejectInput] = useState(false);
+    const [selectedImage, setSelectedImage] = useState<string | null>(null);
+
+    const handleDownload = async (url: string) => {
+        try {
+            const response = await fetch(url);
+            const blob = await response.blob();
+            const blobUrl = window.URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = blobUrl;
+            link.download = `certificate-${Date.now()}.${url.split('.').pop()?.split('?')[0] || 'png'}`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            window.URL.revokeObjectURL(blobUrl);
+        } catch (error) {
+            console.error('Download failed:', error);
+            window.open(url, '_blank');
+        }
+    };
 
     const handleApprove = async () => {
         if (!confirm('Xác nhận phê duyệt hồ sơ giáo viên này?')) return;
@@ -218,17 +237,30 @@ export const TeacherDetailModal: React.FC<TeacherDetailModalProps> = ({
                         {teacher.certificate_urls && teacher.certificate_urls.length > 0 ? (
                             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
                                 {teacher.certificate_urls.map((url: string, idx: number) => (
-                                    <div key={idx} className="relative group rounded-lg overflow-hidden border border-slate-300 dark:border-slate-600">
+                                    <div key={idx} className="relative group rounded-lg overflow-hidden border border-slate-300 dark:border-slate-600 aspect-[4/3]">
                                         <img
                                             src={url}
                                             alt={`Chứng chỉ ${idx + 1}`}
-                                            className="w-full h-32 object-cover cursor-pointer hover:scale-110 transition-transform"
-                                            onClick={() => window.open(url, '_blank')}
+                                            className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
                                         />
-                                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors flex items-center justify-center">
-                                            <span className="text-white text-xs opacity-0 group-hover:opacity-100 transition-opacity">
-                                                Xem lớn
-                                            </span>
+                                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors flex items-center justify-center gap-3 opacity-0 group-hover:opacity-100 duration-300">
+                                            <button
+                                                onClick={() => setSelectedImage(url)}
+                                                className="p-2 bg-white/20 hover:bg-white/30 text-white rounded-full backdrop-blur-sm transition-colors transform translate-y-4 group-hover:translate-y-0 duration-300"
+                                                title="Xem lớn"
+                                            >
+                                                <Maximize2 className="w-5 h-5" />
+                                            </button>
+                                            <button
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    handleDownload(url);
+                                                }}
+                                                className="p-2 bg-white/20 hover:bg-white/30 text-white rounded-full backdrop-blur-sm transition-colors transform translate-y-4 group-hover:translate-y-0 duration-300 delay-75"
+                                                title="Tải xuống"
+                                            >
+                                                <Download className="w-5 h-5" />
+                                            </button>
                                         </div>
                                     </div>
                                 ))}
@@ -360,6 +392,40 @@ export const TeacherDetailModal: React.FC<TeacherDetailModalProps> = ({
                     </div>
                 )}
             </div>
+            {/* Image Viewer Lightbox */}
+            {selectedImage && (
+                <div
+                    className="fixed inset-0 z-[60] bg-black/90 flex items-center justify-center p-4 backdrop-blur-sm animate-in fade-in duration-200"
+                    onClick={() => setSelectedImage(null)}
+                >
+                    <button
+                        onClick={() => setSelectedImage(null)}
+                        className="absolute top-4 right-4 p-2 bg-white/10 hover:bg-white/20 text-white rounded-full transition-colors z-10"
+                    >
+                        <X className="w-6 h-6" />
+                    </button>
+
+                    <div
+                        className="relative max-w-7xl w-full h-full flex items-center justify-center"
+                        onClick={e => e.stopPropagation()}
+                    >
+                        <img
+                            src={selectedImage}
+                            alt="Certificate Full"
+                            className="max-w-full max-h-[90vh] object-contain rounded-lg shadow-2xl"
+                        />
+                        <div className="absolute bottom-4 left-1/2 -translate-x-1/2">
+                            <button
+                                onClick={() => handleDownload(selectedImage)}
+                                className="flex items-center gap-2 px-6 py-3 bg-white/10 hover:bg-white/20 text-white rounded-full backdrop-blur-md transition-colors font-medium border border-white/20 hover:scale-105 active:scale-95 duration-200"
+                            >
+                                <Download className="w-5 h-5" />
+                                Tải ảnh về
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };
