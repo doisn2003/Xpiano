@@ -1,41 +1,111 @@
-import React from 'react';
-import { ArrowLeft } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
+import { Header } from '../components/Header';
+import { LearnSidebar, LearnTab } from '../components/learn/LearnSidebar';
+import { SocialFeed } from '../components/learn/SocialFeed';
+import { MessagingPanel } from '../components/learn/MessagingPanel';
+import { ClassroomHub } from '../components/learn/ClassroomHub';
+import { MyStats } from '../components/learn/MyStats';
+import { NotificationBell } from '../components/learn/NotificationBell';
+import { LiveRoom } from '../components/learn/LiveRoom';
+import socketService from '../lib/socketService';
 
 export const LearnPage: React.FC = () => {
+    const { user, isAuthenticated } = useAuth();
+    const [activeTab, setActiveTab] = useState<LearnTab>('feed');
+    const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
     const navigate = useNavigate();
 
+    // Connect socket once when user is authenticated
+    useEffect(() => {
+        if (user?.id) {
+            const token = localStorage.getItem('token');
+            if (token) {
+                socketService.connect(token).catch(err => {
+                    console.warn('Socket connect failed (server may be offline):', err.message);
+                });
+            }
+        }
+
+        const handleOpenConversation = (e: any) => {
+            if (e.detail) {
+                // We'll set the active tab first
+                setActiveTab('messages');
+                // The actual conversation selection will be handled by the MessagingPanel component
+                // To do this we need to pass down a pending conversation state or use a global state manager.
+                // For simplicity, we can store it in window temporarily
+                (window as any).__pendingConversation = e.detail;
+            }
+        };
+
+        window.addEventListener('open-conversation', handleOpenConversation);
+
+        return () => {
+            // Disconnect when leaving the page
+            socketService.disconnect();
+            window.removeEventListener('open-conversation', handleOpenConversation);
+        };
+    }, [user?.id]);
+
+    const renderContent = () => {
+        switch (activeTab) {
+            case 'feed':
+                return (
+                    <SocialFeed
+                        currentUserId={user?.id}
+                        userName={user?.full_name}
+                        userAvatar={user?.avatar_url}
+                    />
+                );
+            case 'messages':
+                return <MessagingPanel currentUserId={user?.id} />;
+            case 'classrooms':
+                return <ClassroomHub currentUserId={user?.id} userRole={user?.role} onJoinLive={(id) => setActiveSessionId(id)} />;
+            case 'stats':
+                return <MyStats currentUserId={user?.id} />;
+            default:
+                return null;
+        }
+    };
+
+    // Full-screen LiveRoom overlay
+    if (activeSessionId) {
+        return (
+            <LiveRoom
+                sessionId={activeSessionId}
+                currentUserId={user?.id || ''}
+                userRole={user?.role}
+                onLeave={() => setActiveSessionId(null)}
+            />
+        );
+    }
+
     return (
-        <div className="relative min-h-screen flex items-center justify-center overflow-hidden">
-            {/* Background Image with Overlay */}
-            <div
-                className="absolute inset-0 z-0"
-                style={{
-                    backgroundImage: 'url("https://images.unsplash.com/photo-1552422535-c45813c61732?q=80&w=2070&auto=format&fit=crop")',
-                    backgroundSize: 'cover',
-                    backgroundPosition: 'center',
-                }}
-            >
-                <div className="absolute inset-0 bg-black/50 backdrop-blur-sm"></div>
-            </div>
+        <div className="min-h-screen bg-slate-50 dark:bg-slate-900 transition-colors">
+            <Header />
 
-            {/* Content */}
-            <div className="relative z-10 text-center px-4 max-w-2xl mx-auto animate-fade-in-up">
-                <h1 className="text-4xl md:text-6xl font-display font-bold text-white mb-6 drop-shadow-lg">
-                    Học Đàn
-                </h1>
-                <div className="w-24 h-1 bg-primary mx-auto mb-8 rounded-full"></div>
-                <p className="text-xl md:text-2xl text-slate-200 font-light leading-relaxed mb-10 border border-white/20 p-8 rounded-2xl bg-white/10 backdrop-blur-md shadow-xl">
-                    "Tính năng đang được phát triển! <br /> Mời quý khách quay trở lại sau!"
-                </p>
+            {/* Notification Bell (floating top-right for logged-in users) */}
+            {user?.id && (
+                <div className="fixed top-3 right-28 z-40">
+                    <NotificationBell currentUserId={user.id} />
+                </div>
+            )}
 
-                <button
-                    onClick={() => navigate('/')}
-                    className="group flex items-center gap-2 mx-auto px-6 py-3 bg-white/10 hover:bg-white/20 text-white rounded-full transition-all duration-300 border border-white/30 hover:border-white/50"
-                >
-                    <ArrowLeft className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
-                    <span>Quay về trang chủ</span>
-                </button>
+            <div className="flex">
+                {/* Sidebar */}
+                <LearnSidebar
+                    activeTab={activeTab}
+                    onTabChange={setActiveTab}
+                    userName={user?.full_name}
+                    userAvatar={user?.avatar_url}
+                    userRole={user?.role}
+                />
+
+                {/* Main Content */}
+                <main className="flex-1 min-h-[calc(100vh-64px)] p-4 lg:p-6 xl:p-8 pb-24 lg:pb-8 overflow-x-hidden">
+                    {renderContent()}
+                </main>
             </div>
         </div>
     );

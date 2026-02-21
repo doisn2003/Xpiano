@@ -70,16 +70,42 @@ export const LoginAdmin: React.FC = () => {
         setIsLoading(true);
 
         try {
+            let res;
             if (loginMethod === 'password') {
-                // Use admin login endpoint
-                const res = await authService.adminLogin({ email, password, role });
-                if (!res.success) {
-                    setError(res.message);
-                    return;
-                }
+                // Use admin login endpoint which enforces role check on backend
+                res = await authService.adminLogin({ email, password, role });
             } else {
-                await authService.loginOtp(email, otp);
+                // OTP login is generic, so we must check role manually after login
+                res = await authService.loginOtp(email, otp);
             }
+
+            if (!res.success) {
+                setError(res.message);
+                return;
+            }
+
+            const user = res.data.user;
+
+            // Strict Role Check
+            if (user.role !== 'admin' && user.role !== 'warehouse_owner') {
+                await authService.logout();
+                setError('Tài khoản này không có quyền truy cập trang quản trị.');
+                return;
+            }
+
+            // Optional: Ensure they are logging in to the correct role tab (Admin vs Warehouse Owner)
+            // Though flexible is fine, let's correspond to the UI toggle for clarity
+            if (role === 'admin' && user.role !== 'admin') {
+                await authService.logout();
+                setError('Vui lòng chọn đúng vai trò "Chủ kho đàn" để đăng nhập.');
+                return;
+            }
+            if (role === 'warehouse_owner' && user.role !== 'warehouse_owner') {
+                await authService.logout();
+                setError('Vui lòng chọn đúng vai trò "Admin" để đăng nhập.');
+                return;
+            }
+
             navigate('/admin');
         } catch (err: any) {
             setError(err.response?.data?.message || err.message || 'Đăng nhập thất bại.');

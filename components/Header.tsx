@@ -40,9 +40,9 @@ export const Header: React.FC = () => {
           {/* Navigation - Desktop */}
           <nav className="hidden lg:flex items-center gap-8 font-medium text-sm text-slate-600 dark:text-slate-300">
             {[
-              { name: 'Mua đàn', path: '/marketplace' },
-              { name: 'Mượn đàn', path: '/marketplace' },
+              { name: 'Đàn Piano', path: '/marketplace' },
               { name: 'Học đàn', path: '/learn' }, // Assuming these pages exist or will exist; for now placeholders ok
+              { name: 'Hợp tác', path: '/cooperation' },
               { name: 'Đối tác', path: '/partners' },
               { name: 'Về chúng tôi', path: '/about' }
             ].map((item) => (
@@ -180,9 +180,9 @@ export const Header: React.FC = () => {
           <div className="lg:hidden mt-4 pb-4 border-t border-slate-200 dark:border-slate-700 pt-4 animate-in slide-in-from-top-2 duration-200">
             <nav className="flex flex-col gap-4 font-medium text-sm text-slate-600 dark:text-slate-300">
               {[
-                { name: 'Mua đàn', path: '/marketplace' },
-                { name: 'Mượn đàn', path: '/marketplace' },
+                { name: 'Đàn Piano', path: '/marketplace' },
                 { name: 'Học đàn', path: '/learn' },
+                { name: 'Hợp tác', path: '/cooperation' },
                 { name: 'Đối tác', path: '/partners' },
                 { name: 'Về chúng tôi', path: '/about' }
               ].map((item) => (

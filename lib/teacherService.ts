@@ -44,6 +44,7 @@ export interface Course {
     sessions_per_week: number;
     max_students: number;
     start_date: string;
+    schedule: { day_of_week: number; time: string }[];
     is_online: boolean;
     location?: string;
     status: 'active' | 'completed' | 'cancelled';
@@ -54,6 +55,12 @@ export interface TeacherStats {
     totalCourses: number;
     totalStudents: number;
     totalRevenue: number;
+    chartData?: {
+        month: string;
+        yearMonth: string;
+        revenue: number;
+        students: number;
+    }[];
 }
 
 class TeacherService {
@@ -89,7 +96,7 @@ class TeacherService {
      */
     async getMyCourses(): Promise<Course[]> {
         try {
-            const response = await api.get('/teacher/courses');
+            const response = await api.get('/courses/me/teaching');
             return response.data.data || [];
         } catch (error: any) {
             throw new Error(error.response?.data?.message || 'Có lỗi xảy ra');
@@ -101,10 +108,22 @@ class TeacherService {
      */
     async createCourse(courseData: Partial<Course>): Promise<{ success: boolean; message: string; data?: Course }> {
         try {
-            const response = await api.post('/teacher/courses', courseData);
+            const response = await api.post('/courses', courseData);
             return response.data;
         } catch (error: any) {
             throw new Error(error.response?.data?.message || 'Có lỗi xảy ra khi tạo khóa học');
+        }
+    }
+
+    /**
+     * Publish a course
+     */
+    async publishCourse(courseId: string): Promise<{ success: boolean; message: string }> {
+        try {
+            const response = await api.post(`/courses/${courseId}/publish`);
+            return response.data;
+        } catch (error: any) {
+            throw new Error(error.response?.data?.message || 'Có lỗi xảy ra khi xuất bản khóa học');
         }
     }
 

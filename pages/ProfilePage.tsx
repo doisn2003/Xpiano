@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { GoldButton } from '../components/GoldButton';
-import { User, Heart, ShoppingBag, Calendar, Edit2, Lock, Save, X, Camera } from 'lucide-react';
+import { User, Heart, ShoppingBag, Calendar, Edit2, Lock, Save, X, Camera, Users } from 'lucide-react';
 import uploadService from '../lib/uploadService';
 import { useAuth } from '../contexts/AuthContext';
 import { Header } from '../components/Header';
@@ -10,12 +10,19 @@ import { ProductCard } from '../components/ProductCard';
 import favoriteService, { FavoriteWithPiano } from '../lib/favoriteService';
 import orderService, { OrderWithDetails } from '../lib/orderService';
 import userService from '../lib/userService';
+import AffiliateDashboard from '../components/Affiliate/AffiliateDashboard';
+import walletService from '../lib/walletService';
+import api from '../lib/api';
+import styles from '../components/Button.module.css';
 
 export const ProfilePage: React.FC = () => {
     const { user, isAuthenticated, isLoading: authLoading, refreshUser } = useAuth();
     const navigate = useNavigate();
 
-    const [activeTab, setActiveTab] = useState<'info' | 'favorites' | 'orders' | 'rentals'>('info');
+    const [searchParams] = useSearchParams();
+    const initialTab = searchParams.get('tab') as any;
+    const [activeTab, setActiveTab] = useState<'info' | 'favorites' | 'orders' | 'rentals' | 'affiliate'>('info');
+
     const [isEditing, setIsEditing] = useState(false);
     const [editedName, setEditedName] = useState('');
     const [editedPhone, setEditedPhone] = useState('');
@@ -29,6 +36,9 @@ export const ProfilePage: React.FC = () => {
     const [favorites, setFavorites] = useState<FavoriteWithPiano[]>([]);
     const [orders, setOrders] = useState<OrderWithDetails[]>([]);
     const [rentals, setRentals] = useState<any[]>([]);
+    const [wallet, setWallet] = useState<any>(null);
+    const [isAffiliate, setIsAffiliate] = useState(false);
+    const [withdrawalCount, setWithdrawalCount] = useState(0);
 
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
@@ -37,6 +47,12 @@ export const ProfilePage: React.FC = () => {
     // Avatar upload
     const [avatarUploading, setAvatarUploading] = useState(false);
     const [avatarProgress, setAvatarProgress] = useState(0);
+
+    useEffect(() => {
+        if (initialTab && ['info', 'favorites', 'orders', 'rentals', 'affiliate'].includes(initialTab)) {
+            setActiveTab(initialTab);
+        }
+    }, [initialTab]);
 
     useEffect(() => {
         // Wait for auth to finish loading before checking authentication
@@ -67,6 +83,42 @@ export const ProfilePage: React.FC = () => {
             setFavorites(favs);
             setOrders(ords);
             setRentals(rents);
+
+            // Logic hiển thị số dư
+            if (user) {
+                const role = user.role;
+                let shouldFetchWallet = false;
+
+                if (role === 'admin' || role === 'teacher') {
+                    shouldFetchWallet = true;
+                } else if (role === 'user') {
+                    // Check affiliate status
+                    try {
+                        const affiliateRes = await api.get('/affiliate/me');
+                        if (affiliateRes.data?.success) {
+                            setIsAffiliate(true);
+                            shouldFetchWallet = true;
+                        }
+                    } catch (e) {
+                        setIsAffiliate(false);
+                    }
+                }
+
+                if (shouldFetchWallet) {
+                    const walletRes = await walletService.getMyWallet();
+                    if (walletRes.success && walletRes.data) {
+                        setWallet(walletRes.data.wallet);
+                    }
+                }
+
+                // Logic cho Admin: đếm yêu cầu rút tiền
+                if (role === 'admin') {
+                    const requestsRes = await walletService.getAdminWithdrawalRequests();
+                    if (requestsRes.success && requestsRes.data) {
+                        setWithdrawalCount(requestsRes.data.total || requestsRes.data.requests.length || 0);
+                    }
+                }
+            }
         } catch (err: any) {
             console.error('Error loading data:', err);
         } finally {
@@ -238,6 +290,7 @@ export const ProfilePage: React.FC = () => {
                             { id: 'favorites', label: 'Yêu thích', icon: Heart },
                             { id: 'orders', label: 'Đơn hàng', icon: ShoppingBag },
                             { id: 'rentals', label: 'Đang mượn', icon: Calendar },
+                            { id: 'affiliate', label: '🤝 Affiliate', icon: Users },
                         ].map(({ id, label, icon: Icon }) => (
                             <GoldButton
                                 key={id}
@@ -263,150 +316,195 @@ export const ProfilePage: React.FC = () => {
                     <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-lg p-8">
                         {/* Info Tab */}
                         {activeTab === 'info' && (
-                            <div className="space-y-6">
-                                <div className="flex items-center justify-between mb-6">
-                                    <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Thông tin cá nhân</h2>
-                                    {!isEditing && (
-                                        <GoldButton
-                                            onClick={() => setIsEditing(true)}
-                                            className="flex items-center gap-2 px-4 py-2 rounded-lg"
-                                        >
-                                            <Edit2 className="w-4 h-4" />
-                                            Chỉnh sửa
-                                        </GoldButton>
-                                    )}
-                                </div>
+                            <div className="flex flex-col md:flex-row gap-8">
+                                {/* Left Column: User Info */}
+                                <div className="flex-1 space-y-6">
+                                    <div className="flex items-center justify-between mb-4">
+                                        <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Thông tin cá nhân</h2>
 
-                                {/* Avatar Section */}
-                                <div className="flex items-center gap-6 mb-6">
-                                    <div className="relative group">
-                                        <div className="w-24 h-24 rounded-full bg-slate-200 dark:bg-slate-700 overflow-hidden flex items-center justify-center">
-                                            {user.avatar_url ? (
-                                                <img
-                                                    src={user.avatar_url}
-                                                    alt="Avatar"
-                                                    className="w-full h-full object-cover"
+                                    </div>
+
+                                    {/* Avatar Section */}
+                                    <div className="flex items-center gap-6">
+                                        <div className="relative group">
+                                            <div className="w-24 h-24 rounded-full bg-slate-200 dark:bg-slate-700 overflow-hidden flex items-center justify-center">
+                                                {user.avatar_url ? (
+                                                    <img
+                                                        src={user.avatar_url}
+                                                        alt="Avatar"
+                                                        className="w-full h-full object-cover"
+                                                    />
+                                                ) : (
+                                                    <User className="w-12 h-12 text-slate-400" />
+                                                )}
+                                            </div>
+                                            <label className="absolute inset-0 flex items-center justify-center bg-black/40 rounded-full opacity-0 group-hover:opacity-100 cursor-pointer transition-opacity">
+                                                <Camera className="w-6 h-6 text-white" />
+                                                <input
+                                                    type="file"
+                                                    accept=".jpg,.jpeg,.png,.webp"
+                                                    onChange={handleAvatarUpload}
+                                                    className="hidden"
+                                                    disabled={avatarUploading}
                                                 />
-                                            ) : (
-                                                <User className="w-12 h-12 text-slate-400" />
+                                            </label>
+                                            {avatarUploading && (
+                                                <div className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-full">
+                                                    <span className="text-white text-xs font-bold">{avatarProgress}%</span>
+                                                </div>
                                             )}
                                         </div>
-                                        <label className="absolute inset-0 flex items-center justify-center bg-black/40 rounded-full opacity-0 group-hover:opacity-100 cursor-pointer transition-opacity">
-                                            <Camera className="w-6 h-6 text-white" />
-                                            <input
-                                                type="file"
-                                                accept=".jpg,.jpeg,.png,.webp"
-                                                onChange={handleAvatarUpload}
-                                                className="hidden"
-                                                disabled={avatarUploading}
-                                            />
-                                        </label>
-                                        {avatarUploading && (
-                                            <div className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-full">
-                                                <span className="text-white text-xs font-bold">{avatarProgress}%</span>
+                                        <div>
+                                            <p className="text-sm text-slate-600 dark:text-slate-400">Ảnh đại diện</p>
+                                            <p className="text-xs text-slate-500">JPG, PNG, WEBP (tối đa 5MB)</p>
+                                        </div>
+                                    </div>
+
+                                    <div className="space-y-4">
+                                        <div>
+                                            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                                                Họ và tên
+                                            </label>
+                                            {isEditing ? (
+                                                <input
+                                                    type="text"
+                                                    value={editedName}
+                                                    onChange={(e) => setEditedName(e.target.value)}
+                                                    className="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white"
+                                                />
+                                            ) : (
+                                                <p className="text-slate-900 dark:text-white font-medium text-lg">{user.full_name}</p>
+                                            )}
+                                        </div>
+
+                                        <div>
+                                            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                                                Số điện thoại
+                                            </label>
+                                            {isEditing ? (
+                                                <input
+                                                    type="tel"
+                                                    value={editedPhone}
+                                                    onChange={(e) => setEditedPhone(e.target.value)}
+                                                    className="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white"
+                                                    placeholder="09xxxxxxxx"
+                                                />
+                                            ) : (
+                                                <p className="text-slate-900 dark:text-white font-medium text-lg">{user.phone || 'Chưa cập nhật'}</p>
+                                            )}
+                                        </div>
+
+                                        <div>
+                                            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                                                Email
+                                            </label>
+                                            <p className="text-slate-900 dark:text-white font-medium text-lg">{user.email}</p>
+                                            <p className="text-xs text-slate-500">Email không thể thay đổi</p>
+                                        </div>
+
+                                        <div>
+                                            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                                                Vai trò
+                                            </label>
+                                            <p className="text-slate-900 dark:text-white font-medium text-lg">
+                                                {(() => {
+                                                    const role = user.role?.toLowerCase().trim();
+                                                    if (role === 'admin') return 'Quản trị viên';
+                                                    if (role === 'teacher') return 'Giáo viên';
+                                                    if (role === 'warehouse_owner') return 'Chủ kho đàn';
+                                                    return 'Người dùng';
+                                                })()}
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    {isEditing && (
+                                        <div className="flex gap-4 pt-2">
+                                            <GoldButton
+                                                onClick={handleSaveProfile}
+                                                disabled={loading}
+                                                className="flex items-center gap-2 px-6 py-2 rounded-lg disabled:opacity-50"
+                                            >
+                                                <Save className="w-4 h-4" />
+                                                Lưu thay đổi
+                                            </GoldButton>
+                                            <GoldButton
+                                                onClick={() => {
+                                                    setIsEditing(false);
+                                                    setEditedName(user.full_name);
+                                                    setEditedPhone(user.phone || '');
+                                                }}
+                                                className="flex items-center gap-2 px-6 py-2 !bg-slate-200 !bg-none dark:!bg-slate-700 text-slate-700 dark:text-slate-300 rounded-lg hover:bg-slate-300 dark:hover:bg-slate-600"
+                                            >
+                                                <X className="w-4 h-4" />
+                                                Hủy
+                                            </GoldButton>
+                                        </div>
+                                    )}
+
+                                    <div className="pt-4 border-t border-slate-200 dark:border-slate-700">
+                                        <div className="flex flex-col md:flex-row gap-5">
+                                            {!isEditing && (
+                                                <GoldButton
+                                                    onClick={() => setIsEditing(true)}
+                                                    className="flex items-center gap-2 px-6 py-2 !bg-slate-100 dark:!bg-slate-700 !bg-none text-slate-700 dark:text-slate-300 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-600 w-full justify-center md:w-auto"
+                                                >
+                                                    <Edit2 className="w-4 h-4" />
+                                                    Chỉnh sửa thông tin
+                                                </GoldButton>
+                                            )}
+                                            <GoldButton
+                                                onClick={() => setShowPasswordModal(true)}
+                                                className="flex items-center gap-2 px-6 py-2 !bg-slate-100 dark:!bg-slate-700 !bg-none text-slate-700 dark:text-slate-300 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-600 w-full justify-center md:w-auto"
+                                            >
+                                                <Lock className="w-4 h-4" />
+                                                Đổi mật khẩu
+                                            </GoldButton>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Right Column: Balance & Stats (Only for authorized roles) */}
+                                {(user.role === 'admin' || user.role === 'teacher' || (user.role === 'user' && isAffiliate)) && (
+                                    <div className="w-full md:w-1/3 space-y-6">
+                                        {/* Balance Card */}
+                                        <div className="bg-gradient-to-br from-yellow-50 to-yellow-100 dark:from-yellow-900/20 dark:to-yellow-800/20 border border-yellow-200 dark:border-yellow-700/50 rounded-2xl p-6 shadow-inner">
+                                            <h3 className="text-lg font-semibold text-yellow-800 dark:text-yellow-200 mb-2">
+                                                Số dư khả dụng
+                                            </h3>
+                                            <div className="text-3xl font-bold text-yellow-900 dark:text-yellow-100 mb-6 font-display">
+                                                {wallet ? new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(wallet.available_balance) : '0 ₫'}
+                                            </div>
+                                            <button
+                                                onClick={() => navigate('/wallet')}
+                                                className={`${styles.goldButton} w-full justify-center`}
+                                            >
+                                                Xem chi tiết
+                                            </button>
+                                        </div>
+
+                                        {/* Admin specific: Withdrawal Requests */}
+                                        {user.role === 'admin' && (
+                                            <div className="bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-2xl p-6 shadow-sm">
+                                                <h3 className="text-lg font-semibold text-slate-800 dark:text-slate-200 mb-2">
+                                                    Yêu cầu rút tiền
+                                                </h3>
+                                                <div className="flex items-center gap-3 mb-6">
+                                                    <div className="text-3xl font-bold text-slate-900 dark:text-white font-display">
+                                                        {withdrawalCount}
+                                                    </div>
+                                                    <span className="text-sm text-slate-500 dark:text-slate-400">yêu cầu mới</span>
+                                                </div>
+                                                <button
+                                                    onClick={() => navigate('/admin/withdrawals')}
+                                                    className={`${styles.goldButton} w-full justify-center !bg-none !bg-slate-100 dark:!bg-slate-600 hover:!bg-slate-200 !text-slate-700 dark:!text-slate-200`}
+                                                >
+                                                    Xem danh sách
+                                                </button>
                                             </div>
                                         )}
                                     </div>
-                                    <div>
-                                        <p className="text-sm text-slate-600 dark:text-slate-400">Ảnh đại diện</p>
-                                        <p className="text-xs text-slate-500">JPG, PNG, WEBP (tối đa 5MB)</p>
-                                    </div>
-                                </div>
-
-                                <div className="grid md:grid-cols-2 gap-6">
-                                    <div>
-                                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                                            Họ và tên
-                                        </label>
-                                        {isEditing ? (
-                                            <input
-                                                type="text"
-                                                value={editedName}
-                                                onChange={(e) => setEditedName(e.target.value)}
-                                                className="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white"
-                                            />
-                                        ) : (
-                                            <p className="text-slate-900 dark:text-white font-medium">{user.full_name}</p>
-                                        )}
-                                    </div>
-
-                                    <div>
-                                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                                            Email
-                                        </label>
-                                        <p className="text-slate-900 dark:text-white font-medium">{user.email}</p>
-                                        <p className="text-xs text-slate-500 mt-1">Email không thể thay đổi</p>
-                                    </div>
-
-                                    <div>
-                                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                                            Số điện thoại
-                                        </label>
-                                        {isEditing ? (
-                                            <input
-                                                type="tel"
-                                                value={editedPhone}
-                                                onChange={(e) => setEditedPhone(e.target.value)}
-                                                className="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white"
-                                                placeholder="09xxxxxxxx"
-                                            />
-                                        ) : (
-                                            <p className="text-slate-900 dark:text-white font-medium">{user.phone || 'Chưa cập nhật'}</p>
-                                        )}
-                                    </div>
-
-                                    <div>
-                                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                                            Vai trò
-                                        </label>
-                                        <p className="text-slate-900 dark:text-white font-medium">
-                                            {(() => {
-                                                console.log('🔍 DEBUG ProfilePage - user.role:', user.role, typeof user.role);
-                                                const role = user.role?.toLowerCase().trim();
-                                                if (role === 'admin') return 'Quản trị viên';
-                                                if (role === 'teacher') return 'Giáo viên';
-                                                if (role === 'warehouse_owner') return 'Chủ kho đàn';
-                                                return 'Người dùng';
-                                            })()}
-                                        </p>
-                                    </div>
-                                </div>
-
-                                {isEditing && (
-                                    <div className="flex gap-4">
-                                        <GoldButton
-                                            onClick={handleSaveProfile}
-                                            disabled={loading}
-                                            className="flex items-center gap-2 px-6 py-2 rounded-lg disabled:opacity-50"
-                                        >
-                                            <Save className="w-4 h-4" />
-                                            Lưu thay đổi
-                                        </GoldButton>
-                                        <GoldButton
-                                            onClick={() => {
-                                                setIsEditing(false);
-                                                setEditedName(user.full_name);
-                                                setEditedPhone(user.phone || '');
-                                            }}
-                                            className="flex items-center gap-2 px-6 py-2 !bg-slate-200 !bg-none dark:!bg-slate-700 text-slate-700 dark:text-slate-300 rounded-lg hover:bg-slate-300 dark:hover:bg-slate-600"
-                                        >
-                                            <X className="w-4 h-4" />
-                                            Hủy
-                                        </GoldButton>
-                                    </div>
                                 )}
-
-                                <hr className="border-slate-200 dark:border-slate-700" />
-
-                                <div>
-                                    <GoldButton
-                                        onClick={() => setShowPasswordModal(true)}
-                                        className="flex items-center gap-2 px-6 py-2 !bg-slate-100 dark:!bg-slate-700 !bg-none text-slate-700 dark:text-slate-300 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-600"
-                                    >
-                                        <Lock className="w-4 h-4" />
-                                        Đổi mật khẩu
-                                    </GoldButton>
-                                </div>
                             </div>
                         )}
 
@@ -632,6 +730,16 @@ export const ProfilePage: React.FC = () => {
                                         })}
                                     </div>
                                 )}
+                            </div>
+                        )}
+
+                        {/* Affiliate Tab */}
+                        {activeTab === 'affiliate' && (
+                            <div>
+                                <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-6">
+                                    Chương trình Affiliate
+                                </h2>
+                                <AffiliateDashboard />
                             </div>
                         )}
                     </div>

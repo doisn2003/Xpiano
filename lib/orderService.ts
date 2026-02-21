@@ -1,4 +1,5 @@
 import api from './api';
+import { getAffiliateRef } from '../hooks/useAffiliateTracking';
 
 export type PaymentMethod = 'COD' | 'QR';
 
@@ -55,6 +56,8 @@ export interface CreateOrderData {
     rental_start_date?: string;
     rental_end_date?: string;
     payment_method?: PaymentMethod;
+    // Affiliate tracking (tự động đính kèm nếu có mã giới thiệu còn hạn trong localStorage)
+    affiliate_ref?: string;
 }
 
 export interface OrderStatusResponse {
@@ -98,7 +101,19 @@ class OrderService {
      */
     async createOrder(orderData: CreateOrderData): Promise<OrderResponse> {
         try {
-            const response = await api.post('/orders', orderData);
+            // Đọc mã affiliate từ localStorage nếu còn hạn
+            // Frontend không tính tiền, chỉ đính kèm ref_code để backend xử lý
+            const affiliateRef = getAffiliateRef();
+            const payload: CreateOrderData = {
+                ...orderData,
+                ...(affiliateRef ? { affiliate_ref: affiliateRef } : {})
+            };
+
+            if (affiliateRef) {
+                console.log(`📎 Order sent with affiliate ref: ${affiliateRef}`);
+            }
+
+            const response = await api.post('/orders', payload);
             if (response.data.success) {
                 return response.data.data;
             }

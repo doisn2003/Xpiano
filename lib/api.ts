@@ -49,7 +49,7 @@ api.interceptors.response.use(
     (response) => response,
     async (error: AxiosError) => {
         const originalRequest = error.config as InternalAxiosRequestConfig & { _retry?: boolean };
-        
+
         // Only attempt refresh on 401 errors and if we haven't already retried
         if (error.response?.status === 401 && !originalRequest._retry) {
             // Don't try to refresh if this IS a refresh request (avoid infinite loop)
@@ -63,6 +63,7 @@ api.interceptors.response.use(
                     failedQueue.push({ resolve, reject });
                 }).then(token => {
                     originalRequest.headers.Authorization = `Bearer ${token}`;
+                    originalRequest._retry = true; // Mark as retried to avoid infinite loops
                     return api(originalRequest);
                 }).catch(err => {
                     return Promise.reject(err);
@@ -73,7 +74,7 @@ api.interceptors.response.use(
             isRefreshing = true;
 
             const refreshToken = localStorage.getItem('refresh_token');
-            
+
             if (!refreshToken) {
                 isRefreshing = false;
                 // No refresh token, clear session
@@ -92,7 +93,7 @@ api.interceptors.response.use(
 
                 if (response.data.success) {
                     const { token, refresh_token: newRefreshToken, expires_at } = response.data.data;
-                    
+
                     // Update stored tokens
                     localStorage.setItem('token', token);
                     localStorage.setItem('refresh_token', newRefreshToken);
@@ -102,12 +103,12 @@ api.interceptors.response.use(
 
                     // Update the original request with new token
                     originalRequest.headers.Authorization = `Bearer ${token}`;
-                    
+
                     // Process any queued requests
                     processQueue(null, token);
-                    
+
                     isRefreshing = false;
-                    
+
                     // Retry the original request
                     return api(originalRequest);
                 } else {
@@ -116,14 +117,14 @@ api.interceptors.response.use(
             } catch (refreshError) {
                 processQueue(refreshError as Error, null);
                 isRefreshing = false;
-                
+
                 // Clear session on refresh failure
                 localStorage.removeItem('token');
                 localStorage.removeItem('user');
                 localStorage.removeItem('refresh_token');
                 localStorage.removeItem('token_expires_at');
                 window.dispatchEvent(new Event('auth-change'));
-                
+
                 return Promise.reject(error);
             }
         }

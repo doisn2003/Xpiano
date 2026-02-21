@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { GoldButton } from '../components/GoldButton';
-import { Heart, ShoppingCart, Calendar, Star, ArrowLeft, Clock, AlertCircle, CreditCard } from 'lucide-react';
+import { Heart, ShoppingCart, Calendar, Star, ArrowLeft, Clock, AlertCircle, CreditCard, Share2, Copy, CheckCheck, Link } from 'lucide-react';
 import pianoService, { Piano } from '../lib/pianoService';
 import favoriteService from '../lib/favoriteService';
 import orderService, { OrderResponse } from '../lib/orderService';
@@ -9,6 +9,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { Header } from '../components/Header';
 import { Footer } from '../components/Footer';
 import { PaymentModal } from '../components/PaymentModal';
+import api from '../lib/api';
 
 export const PianoDetailPage: React.FC = () => {
     const { id } = useParams<{ id: string }>();
@@ -25,9 +26,14 @@ export const PianoDetailPage: React.FC = () => {
     const [modalType, setModalType] = useState<'buy' | 'rent'>('buy');
     const [rentalStartDate, setRentalStartDate] = useState('');
     const [rentalEndDate, setRentalEndDate] = useState('');
-    
+
     // Pending order state - for resuming QR payment
     const [pendingOrder, setPendingOrder] = useState<OrderResponse | null>(null);
+
+    // Affiliate share link state
+    const [affiliateCode, setAffiliateCode] = useState<string | null>(null);
+    const [linkCopied, setLinkCopied] = useState(false);
+    const [showShareWidget, setShowShareWidget] = useState(false);
 
     // Load pending order from localStorage on mount
     useEffect(() => {
@@ -50,6 +56,18 @@ export const PianoDetailPage: React.FC = () => {
             }
         }
     }, [id]);
+
+    // Fetch affiliate code for logged-in users
+    useEffect(() => {
+        if (!isAuthenticated) return;
+        api.get('/affiliate/me')
+            .then(res => {
+                if (res.data?.success && res.data?.data?.affiliate?.referral_code) {
+                    setAffiliateCode(res.data.data.affiliate.referral_code);
+                }
+            })
+            .catch(() => { /* Không phải affiliate – bình thường */ });
+    }, [isAuthenticated]);
 
     useEffect(() => {
         loadPianoDetails();
@@ -104,7 +122,7 @@ export const PianoDetailPage: React.FC = () => {
             return;
         }
         setModalType(type);
-        
+
         if (type === 'rent') {
             // Show rental date selection first
             setShowRentalModal(true);
@@ -158,6 +176,30 @@ export const PianoDetailPage: React.FC = () => {
             return;
         }
         setShowPaymentModal(true);
+    };
+
+    // Tạo affiliate link cho sản phẩm này
+    const getAffiliateProductLink = () => {
+        const base = window.location.origin;
+        return `${base}/piano/${id}?ref=${affiliateCode}`;
+    };
+
+    const handleCopyAffiliateLink = async () => {
+        try {
+            await navigator.clipboard.writeText(getAffiliateProductLink());
+            setLinkCopied(true);
+            setTimeout(() => setLinkCopied(false), 2500);
+        } catch {
+            // Fallback cho trình duyệt cũ
+            const el = document.createElement('textarea');
+            el.value = getAffiliateProductLink();
+            document.body.appendChild(el);
+            el.select();
+            document.execCommand('copy');
+            document.body.removeChild(el);
+            setLinkCopied(true);
+            setTimeout(() => setLinkCopied(false), 2500);
+        }
     };
 
     const calculateRentalPrice = () => {
@@ -356,6 +398,87 @@ export const PianoDetailPage: React.FC = () => {
                                     </>
                                 )}
                             </div>
+
+                            {/* ── Affiliate Share Widget ────────────────────────────────
+                                Chỉ hiển thị nếu user hiện tại là Affiliate.
+                                Cho phép copy link sản phẩm kèm mã giới thiệu.
+                            ─────────────────────────────────────────────────────── */}
+                            {affiliateCode && (
+                                <div style={{
+                                    marginTop: 20,
+                                    borderRadius: 14,
+                                    border: '1px solid rgba(240,192,88,0.35)',
+                                    background: 'linear-gradient(135deg, rgba(240,192,88,0.08), rgba(232,160,32,0.04))',
+                                    overflow: 'hidden'
+                                }}>
+                                    {/* Header toggle */}
+                                    <button
+                                        onClick={() => setShowShareWidget(p => !p)}
+                                        style={{
+                                            width: '100%', display: 'flex', alignItems: 'center',
+                                            justifyContent: 'space-between', padding: '12px 16px',
+                                            background: 'none', border: 'none', cursor: 'pointer'
+                                        }}
+                                    >
+                                        <span style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#d19916ff', fontWeight: 700, fontSize: 14 }}>
+                                            <Share2 style={{ width: 16, height: 16 }} />
+                                            🔗 Chia sẻ & nhận hoa hồng
+                                        </span>
+                                        <span style={{ color: '#C89B30', fontSize: 18 }}>{showShareWidget ? '▲' : '▼'}</span>
+                                    </button>
+
+                                    {showShareWidget && (
+                                        <div style={{ padding: '4px 16px 16px' }}>
+                                            {/* Giải thích ngắn */}
+                                            <p style={{ color: '#000000ff', fontSize: 12, marginBottom: 10 }}>
+                                                Chia sẻ link này. Khi khách mua/thuê đàn thành công qua link của bạn,
+                                                bạn sẽ nhận <strong style={{ color: '#c68e14ff' }}>hoa hồng tự động</strong>.
+                                            </p>
+
+                                            {/* Link box */}
+                                            <div style={{
+                                                display: 'flex', alignItems: 'center', gap: 8,
+                                                background: 'rgba(0,0,0,0.15)', borderRadius: 10,
+                                                padding: '10px 12px', border: '1px solid rgba(240,192,88,0.2)'
+                                            }}>
+                                                <Link style={{ width: 14, height: 14, color: '#F0C058', flexShrink: 0 }} />
+                                                <span style={{
+                                                    flex: 1, fontSize: 12, color: '#000000ff',
+                                                    overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                                                    fontFamily: 'monospace'
+                                                }}>
+                                                    {getAffiliateProductLink()}
+                                                </span>
+                                                <button
+                                                    id="copy-affiliate-link-btn"
+                                                    onClick={handleCopyAffiliateLink}
+                                                    title="Copy link"
+                                                    style={{
+                                                        flexShrink: 0, padding: '6px 12px', borderRadius: 8,
+                                                        border: 'none', cursor: 'pointer', fontWeight: 700, fontSize: 12,
+                                                        display: 'flex', alignItems: 'center', gap: 6,
+                                                        background: linkCopied
+                                                            ? 'rgba(16,185,129,0.2)'
+                                                            : 'linear-gradient(135deg, #F0C058, #C89B30)',
+                                                        color: linkCopied ? '#10B981' : '#1a1a1a',
+                                                        transition: 'all 0.2s'
+                                                    }}
+                                                >
+                                                    {linkCopied
+                                                        ? <><CheckCheck style={{ width: 14, height: 14 }} /> Đã copy!</>
+                                                        : <><Copy style={{ width: 14, height: 14 }} /> Copy link</>
+                                                    }
+                                                </button>
+                                            </div>
+
+                                            {/* Badge mã giới thiệu */}
+                                            <p style={{ color: '#64748B', fontSize: 11, marginTop: 8, textAlign: 'right' }}>
+                                                Mã của bạn: <strong style={{ color: '#c08e24ff', fontFamily: 'monospace' }}>{affiliateCode}</strong>
+                                            </p>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
                         </div>
                     </div>
                 </div>
