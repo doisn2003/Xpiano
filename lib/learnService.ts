@@ -95,6 +95,57 @@ class LearnService {
         }
     }
 
+    async getUserPosts(userId: string, cursor?: string, limit = 20): Promise<PaginatedResponse<Post>> {
+        try {
+            const params: any = { limit };
+            if (cursor) params.cursor = cursor;
+            const res = await api.get(`/posts/user/${userId}`, { params });
+            return res.data;
+        } catch (error: any) {
+            return { success: false, data: [], message: error.response?.data?.message || 'Lỗi tải bài viết của người dùng' };
+        }
+    }
+
+    // ========================
+    // COURSES (MARKETPLACE)
+    // ========================
+
+    async getPublicCourses(params?: any) {
+        try {
+            const res = await api.get('/courses', { params });
+            return res.data;
+        } catch (error: any) {
+            return { success: false, data: [], message: error.response?.data?.message || 'Lỗi tải danh sách khóa học' };
+        }
+    }
+
+    async getCourseDetails(courseId: string) {
+        try {
+            const res = await api.get(`/courses/${courseId}`);
+            return res.data;
+        } catch (error: any) {
+            return { success: false, message: error.response?.data?.message || 'Lỗi tải chi tiết khóa học' };
+        }
+    }
+
+    async getMyEnrolledCourses() {
+        try {
+            const res = await api.get('/courses/me/enrolled');
+            return res.data;
+        } catch (error: any) {
+            return { success: false, data: [], message: error.response?.data?.message || 'Lỗi tải khóa học của tôi' };
+        }
+    }
+
+    async getAdminCourseStats() {
+        try {
+            const res = await api.get('/courses/admin/stats');
+            return res.data;
+        } catch (error: any) {
+            return { success: false, data: null, message: error.response?.data?.message || 'Lỗi tải thống kê khóa học admin' };
+        }
+    }
+
     async createPost(data: { content: string; media_urls?: string[]; post_type?: string; visibility?: string }) {
         try {
             const res = await api.post('/posts', data);

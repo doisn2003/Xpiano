@@ -1,12 +1,16 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import {
     GraduationCap, Lock, Plus, Loader2, Users, Clock, Calendar,
-    Radio, CheckCircle, XCircle, Filter, ChevronRight, Play, RefreshCw
+    Radio, CheckCircle, XCircle, Filter, ChevronRight, Play, RefreshCw, BookOpen, ShoppingCart
 } from 'lucide-react';
 import sessionService, { LiveSession } from '../../lib/sessionService';
+import learnService from '../../lib/learnService';
+import teacherService from '../../lib/teacherService';
 import socketService from '../../lib/socketService';
 import { CreateSessionModal } from './CreateSessionModal';
 import { SessionDetail } from './SessionDetail';
+import { CourseCard } from './CourseCard';
+import PaymentModal from '../PaymentModal';
 
 interface ClassroomHubProps {
     currentUserId?: string;
@@ -24,6 +28,14 @@ const STATUS_BADGES: Record<string, { label: string; color: string; icon: React.
 };
 
 export const ClassroomHub: React.FC<ClassroomHubProps> = ({ currentUserId, userRole, onJoinLive }) => {
+    const [activeTab, setActiveTab] = useState<'marketplace' | 'my-courses' | 'schedule'>('marketplace');
+    const [courses, setCourses] = useState<any[]>([]);
+    const [coursesLoading, setCoursesLoading] = useState(false);
+    const [enrolledCourses, setEnrolledCourses] = useState<any[]>([]);
+    const [enrolledLoading, setEnrolledLoading] = useState(false);
+    const [showPaymentModal, setShowPaymentModal] = useState(false);
+    const [selectedCourse, setSelectedCourse] = useState<any>(null);
+
     const [sessions, setSessions] = useState<LiveSession[]>([]);
     const [loading, setLoading] = useState(true);
     const [filter, setFilter] = useState<StatusFilter>('all');
@@ -55,14 +67,56 @@ export const ClassroomHub: React.FC<ClassroomHubProps> = ({ currentUserId, userR
         }
     }, [filter, cursor]);
 
+    const loadCourses = useCallback(async () => {
+        setCoursesLoading(true);
+        try {
+            const res = await learnService.getPublicCourses();
+            if (res.success) {
+                setCourses(res.data);
+            }
+        } finally {
+            setCoursesLoading(false);
+        }
+    }, []);
+
+    const loadEnrolled = useCallback(async () => {
+        setEnrolledLoading(true);
+        try {
+            if (isTeacher) {
+                const courses = await teacherService.getMyCourses();
+                // Filter only 'published' and 'completed'
+                const displayCourses = courses.filter((c: any) => c.status === 'published' || c.status === 'completed');
+                setEnrolledCourses(displayCourses.map((c: any) => ({ id: c.id, course: c })));
+            } else {
+                const res = await learnService.getMyEnrolledCourses();
+                if (res.success) {
+                    setEnrolledCourses(res.data);
+                }
+            }
+        } catch (e) {
+            console.error(e);
+        } finally {
+            setEnrolledLoading(false);
+        }
+    }, [isTeacher]);
+
     useEffect(() => {
         if (currentUserId) {
-            setCursor(undefined);
-            loadSessions(true);
+            if (activeTab === 'schedule') {
+                setCursor(undefined);
+                loadSessions(true);
+            } else if (activeTab === 'marketplace') {
+                loadCourses();
+            } else if (activeTab === 'my-courses') {
+                loadEnrolled();
+            }
         } else {
             setLoading(false);
+            setCoursesLoading(false);
+            setEnrolledLoading(false);
         }
-    }, [currentUserId, filter]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [currentUserId, filter, activeTab]);
 
     // Real-time updates via Socket.io
     useEffect(() => {
@@ -121,13 +175,13 @@ export const ClassroomHub: React.FC<ClassroomHubProps> = ({ currentUserId, userR
                 </div>
                 <div className="flex items-center gap-2">
                     <button
-                        onClick={() => loadSessions(true)}
+                        onClick={() => activeTab === 'marketplace' ? loadCourses() : loadSessions(true)}
                         className="p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-500 transition-colors"
                         title="Làm mới"
                     >
                         <RefreshCw className="w-4 h-4" />
                     </button>
-                    {isTeacher && (
+                    {isTeacher && activeTab === 'schedule' && (
                         <button
                             onClick={() => setShowCreateModal(true)}
                             className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-xl font-semibold text-sm hover:shadow-lg hover:shadow-amber-500/25 transition-all hover:-translate-y-0.5"
@@ -139,74 +193,213 @@ export const ClassroomHub: React.FC<ClassroomHubProps> = ({ currentUserId, userR
                 </div>
             </div>
 
-            {/* Status Filters */}
-            <div className="flex gap-2 mb-6 overflow-x-auto pb-2">
-                {(['all', 'live', 'scheduled', 'ended'] as StatusFilter[]).map(f => (
-                    <button
-                        key={f}
-                        onClick={() => setFilter(f)}
-                        className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all ${filter === f
-                                ? 'bg-amber-500 text-white shadow-md shadow-amber-500/25'
-                                : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700 hover:border-amber-300 dark:hover:border-amber-600'
-                            }`}
-                    >
-                        {f === 'all' && <Filter className="w-3.5 h-3.5" />}
-                        {f === 'live' && <Radio className="w-3.5 h-3.5" />}
-                        {f === 'scheduled' && <Calendar className="w-3.5 h-3.5" />}
-                        {f === 'ended' && <CheckCircle className="w-3.5 h-3.5" />}
-                        {f === 'all' ? 'Tất cả' : STATUS_BADGES[f]?.label}
-                    </button>
-                ))}
+            {/* Navigation Tabs */}
+            <div className="flex border-b border-slate-200 dark:border-slate-700 mb-6 gap-6">
+                <button
+                    onClick={() => setActiveTab('marketplace')}
+                    className={`pb-3 font-semibold text-sm transition-colors border-b-2 flex items-center gap-2 ${activeTab === 'marketplace'
+                        ? 'border-amber-500 text-amber-600 dark:text-amber-400'
+                        : 'border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
+                        }`}
+                >
+                    <BookOpen className="w-4 h-4" /> Chợ Khóa Học
+                </button>
+                <button
+                    onClick={() => setActiveTab('my-courses')}
+                    className={`pb-3 font-semibold text-sm transition-colors border-b-2 flex items-center gap-2 ${activeTab === 'my-courses'
+                        ? 'border-amber-500 text-amber-600 dark:text-amber-400'
+                        : 'border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
+                        }`}
+                >
+                    <GraduationCap className="w-4 h-4" /> Khóa Của Tôi
+                </button>
+                <button
+                    onClick={() => setActiveTab('schedule')}
+                    className={`pb-3 font-semibold text-sm transition-colors border-b-2 flex items-center gap-2 ${activeTab === 'schedule'
+                        ? 'border-amber-500 text-amber-600 dark:text-amber-400'
+                        : 'border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
+                        }`}
+                >
+                    <Calendar className="w-4 h-4" /> Lịch Học
+                </button>
             </div>
 
-            {/* Session List */}
-            {loading && sessions.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-20">
-                    <Loader2 className="w-8 h-8 text-amber-500 animate-spin mb-3" />
-                    <p className="text-sm text-slate-400 dark:text-slate-500">Đang tải lớp học...</p>
-                </div>
-            ) : sessions.length === 0 ? (
-                <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 p-8 text-center">
-                    <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-gradient-to-br from-amber-500/20 to-orange-500/20 flex items-center justify-center">
-                        <GraduationCap className="w-8 h-8 text-amber-500" />
-                    </div>
-                    <h3 className="text-lg font-bold text-slate-700 dark:text-white mb-2">
-                        Chưa có buổi học nào
-                    </h3>
-                    <p className="text-sm text-slate-500 dark:text-slate-400">
-                        {isTeacher ? 'Bấm \"Tạo buổi học\" để bắt đầu!' : 'Các buổi học sẽ hiển thị ở đây khi giáo viên tạo.'}
-                    </p>
-                </div>
-            ) : (
-                <div className="space-y-3">
-                    {sessions.map(session => (
-                        <SessionCard
-                            key={session.id}
-                            session={session}
-                            currentUserId={currentUserId}
-                            onSelect={() => setSelectedSessionId(session.id)}
-                            onJoinLive={onJoinLive}
-                        />
-                    ))}
-
-                    {hasMore && (
-                        <button
-                            onClick={() => loadSessions(false)}
-                            disabled={loading}
-                            className="w-full py-3 text-sm font-medium text-amber-600 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-900/10 rounded-xl transition-colors"
-                        >
-                            {loading ? <Loader2 className="w-4 h-4 animate-spin mx-auto" /> : 'Tải thêm'}
-                        </button>
+            {activeTab === 'marketplace' && (
+                <div className="space-y-4">
+                    {coursesLoading ? (
+                        <div className="flex justify-center py-20">
+                            <Loader2 className="w-8 h-8 text-amber-500 animate-spin" />
+                        </div>
+                    ) : courses.length === 0 ? (
+                        <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 p-8 text-center">
+                            <BookOpen className="w-16 h-16 mx-auto mb-4 text-slate-300 dark:text-slate-600" />
+                            <h3 className="text-lg font-bold text-slate-700 dark:text-white mb-2">Chưa có khóa học nào</h3>
+                            <p className="text-sm text-slate-500">Hiện tại chưa có khóa học nào đang mở bán.</p>
+                        </div>
+                    ) : (
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            {courses.map(course => (
+                                <CourseCard
+                                    key={course.id}
+                                    course={course}
+                                    showTeacher={true}
+                                    action={
+                                        <button
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                setSelectedCourse(course);
+                                                setShowPaymentModal(true);
+                                            }}
+                                            className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-500 hover:bg-amber-600 text-white rounded-lg text-sm font-semibold transition-colors"
+                                        >
+                                            <ShoppingCart className="w-4 h-4" /> Đăng ký
+                                        </button>
+                                    }
+                                />
+                            ))}
+                        </div>
                     )}
                 </div>
             )}
 
-            {/* Create Session Modal */}
-            {showCreateModal && (
-                <CreateSessionModal
-                    onClose={() => setShowCreateModal(false)}
-                    onCreated={handleSessionCreated}
-                />
+            {activeTab === 'my-courses' && (
+                <div className="space-y-4">
+                    {enrolledLoading ? (
+                        <div className="flex justify-center py-20">
+                            <Loader2 className="w-8 h-8 text-amber-500 animate-spin" />
+                        </div>
+                    ) : enrolledCourses.length === 0 ? (
+                        <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 p-8 text-center">
+                            <GraduationCap className="w-16 h-16 mx-auto mb-4 text-slate-300 dark:text-slate-600" />
+                            <h3 className="text-lg font-bold text-slate-700 dark:text-white mb-2">
+                                {isTeacher ? 'Chưa có khóa học nào đang mở bán' : 'Chưa tham gia khóa học nào'}
+                            </h3>
+                            <p className="text-sm text-slate-500">
+                                {isTeacher ? 'Các khóa học đã Xuất bản trên bảng điều khiển sẽ xuất hiện ở đây.' : 'Hãy chuyển sang tab Chợ Khóa Học để tìm hiểu và đăng ký khóa học.'}
+                            </p>
+                        </div>
+                    ) : (
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            {enrolledCourses.map(enrollment => {
+                                const course = enrollment.course;
+                                if (!course) return null;
+                                return (
+                                    <CourseCard
+                                        key={enrollment.id}
+                                        course={course}
+                                        showTeacher={!isTeacher}
+                                        badges={isTeacher ? (
+                                            <span className="px-2 py-0.5 bg-white/90 text-slate-800 rounded-md text-[10px] font-bold uppercase tracking-wider shadow-sm">
+                                                {course.status === 'published' ? 'Đang mở bán' : course.status === 'completed' ? 'Đã kết thúc' : course.status}
+                                            </span>
+                                        ) : undefined}
+                                        action={
+                                            <button
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    setActiveTab('schedule');
+                                                }}
+                                                className="w-full flex items-center justify-center gap-1.5 px-3 py-2 bg-amber-500/10 hover:bg-amber-500/20 text-amber-600 dark:text-amber-400 rounded-lg text-sm font-semibold transition-colors"
+                                            >
+                                                <Calendar className="w-4 h-4" /> Xem Lịch Học
+                                            </button>
+                                        }
+                                    />
+                                );
+                            })}
+                        </div>
+                    )}
+                </div>
+            )}
+
+            {activeTab === 'schedule' && (
+                <>
+                    {/* Status Filters */}
+                    <div className="flex gap-2 mb-6 overflow-x-auto pb-2">
+                        {(['all', 'live', 'scheduled', 'ended'] as StatusFilter[]).map(f => (
+                            <button
+                                key={f}
+                                onClick={() => setFilter(f)}
+                                className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all ${filter === f
+                                    ? 'bg-amber-500 text-white shadow-md shadow-amber-500/25'
+                                    : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700 hover:border-amber-300 dark:hover:border-amber-600'
+                                    }`}
+                            >
+                                {f === 'all' && <Filter className="w-3.5 h-3.5" />}
+                                {f === 'live' && <Radio className="w-3.5 h-3.5" />}
+                                {f === 'scheduled' && <Calendar className="w-3.5 h-3.5" />}
+                                {f === 'ended' && <CheckCircle className="w-3.5 h-3.5" />}
+                                {f === 'all' ? 'Tất cả' : STATUS_BADGES[f]?.label}
+                            </button>
+                        ))}
+                    </div>
+
+                    {/* Session List */}
+                    {loading && sessions.length === 0 ? (
+                        <div className="flex flex-col items-center justify-center py-20">
+                            <Loader2 className="w-8 h-8 text-amber-500 animate-spin mb-3" />
+                            <p className="text-sm text-slate-400 dark:text-slate-500">Đang tải lớp học...</p>
+                        </div>
+                    ) : sessions.length === 0 ? (
+                        <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 p-8 text-center">
+                            <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-gradient-to-br from-amber-500/20 to-orange-500/20 flex items-center justify-center">
+                                <GraduationCap className="w-8 h-8 text-amber-500" />
+                            </div>
+                            <h3 className="text-lg font-bold text-slate-700 dark:text-white mb-2">
+                                Chưa có buổi học nào
+                            </h3>
+                            <p className="text-sm text-slate-500 dark:text-slate-400">
+                                {isTeacher ? 'Bấm \"Tạo buổi học\" để bắt đầu!' : 'Các buổi học sẽ hiển thị ở đây khi giáo viên tạo.'}
+                            </p>
+                        </div>
+                    ) : (
+                        <div className="space-y-3">
+                            {sessions.map(session => (
+                                <SessionCard
+                                    key={session.id}
+                                    session={session}
+                                    currentUserId={currentUserId}
+                                    onSelect={() => setSelectedSessionId(session.id)}
+                                    onJoinLive={onJoinLive}
+                                />
+                            ))}
+
+                            {hasMore && (
+                                <button
+                                    onClick={() => loadSessions(false)}
+                                    disabled={loading}
+                                    className="w-full py-3 text-sm font-medium text-amber-600 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-900/10 rounded-xl transition-colors"
+                                >
+                                    {loading ? <Loader2 className="w-4 h-4 animate-spin mx-auto" /> : 'Tải thêm'}
+                                </button>
+                            )}
+                        </div>
+                    )}
+
+                    {/* Create Session Modal */}
+                    {showCreateModal && (
+                        <CreateSessionModal
+                            onClose={() => setShowCreateModal(false)}
+                            onCreated={handleSessionCreated}
+                        />
+                    )}
+
+                    {showPaymentModal && selectedCourse && (
+                        <PaymentModal
+                            isOpen={showPaymentModal}
+                            onClose={() => setShowPaymentModal(false)}
+                            orderType="course"
+                            courseId={selectedCourse.id}
+                            courseName={selectedCourse.title}
+                            totalPrice={selectedCourse.price}
+                            onSuccess={() => {
+                                alert('Đăng ký khóa học thành công!');
+                                // Might want to switch to 'my courses' or scheduling section
+                                setShowPaymentModal(false);
+                            }}
+                        />
+                    )}
+                </>
             )}
 
             <div className="h-20 lg:h-0" />
@@ -257,8 +450,8 @@ const SessionCard: React.FC<{
             <div className="flex items-start gap-4">
                 {/* Date badge */}
                 <div className={`w-14 h-14 rounded-xl flex flex-col items-center justify-center shrink-0 ${isLive
-                        ? 'bg-gradient-to-br from-green-500 to-emerald-500 text-white'
-                        : 'bg-gradient-to-br from-amber-500/10 to-orange-500/10 text-amber-600 dark:text-amber-400'
+                    ? 'bg-gradient-to-br from-green-500 to-emerald-500 text-white'
+                    : 'bg-gradient-to-br from-amber-500/10 to-orange-500/10 text-amber-600 dark:text-amber-400'
                     }`}>
                     {isLive ? (
                         <Radio className="w-6 h-6 animate-pulse" />

@@ -14,6 +14,7 @@ import pianoService, { Piano } from '../lib/pianoService';
 import orderService, { OrderWithDetails } from '../lib/orderService';
 import userService from '../lib/userService';
 import uploadService from '../lib/uploadService';
+import learnService from '../lib/learnService';
 import AdminCommissions from '../components/Admin/AdminCommissions';
 
 export const AdminDashboard: React.FC = () => {
@@ -76,20 +77,21 @@ export const AdminDashboard: React.FC = () => {
     const loadData = async () => {
         try {
             setLoading(true);
-            const [pianosData, ordersData, usersData, teachersData, pianoStats, orderStats] = await Promise.all([
+            const [pianosData, ordersData, usersData, teachersData, pianoStats, orderStats, courseStats] = await Promise.all([
                 pianoService.getAll(),
                 orderService.getAllOrders(),
                 userService.getAllUsers(),
                 userService.getTeacherProfiles(),
                 pianoService.getStats(),
                 orderService.getOrderStats(),
+                learnService.getAdminCourseStats(),
             ]);
 
             setPianos(pianosData);
             setOrders(ordersData);
             setUsers(usersData);
             setTeachers(teachersData);
-            setStats({ ...pianoStats, ...orderStats });
+            setStats({ ...pianoStats, ...orderStats, ...courseStats });
         } catch (err: any) {
             setError(err.message);
         } finally {
@@ -407,8 +409,12 @@ export const AdminDashboard: React.FC = () => {
                                                 <span className="font-bold text-slate-900 dark:text-white">{stats.buyOrders}</span>
                                             </div>
                                             <div className="flex justify-between">
-                                                <span className="text-slate-600 dark:text-slate-400">Đơn mượn:</span>
+                                                <span className="text-slate-600 dark:text-slate-400">Đơn thuê:</span>
                                                 <span className="font-bold text-slate-900 dark:text-white">{stats.rentOrders}</span>
+                                            </div>
+                                            <div className="flex justify-between">
+                                                <span className="text-slate-600 dark:text-slate-400">Khóa học:</span>
+                                                <span className="font-bold text-slate-900 dark:text-white">{stats.courseOrders || 0}</span>
                                             </div>
                                             <div className="flex justify-between">
                                                 <span className="text-slate-600 dark:text-slate-400">Đã duyệt:</span>
@@ -437,6 +443,19 @@ export const AdminDashboard: React.FC = () => {
                                             <div className="flex justify-between">
                                                 <span className="text-slate-600 dark:text-slate-400">Rating TB:</span>
                                                 <span className="font-bold text-yellow-600">⭐ {stats.avg_rating}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div className="p-6 bg-slate-50 dark:bg-slate-700/50 rounded-xl">
+                                        <h3 className="font-bold text-slate-900 dark:text-white mb-4">Thông tin Lớp học đàn</h3>
+                                        <div className="space-y-2">
+                                            <div className="flex justify-between">
+                                                <span className="text-slate-600 dark:text-slate-400">Khóa giảng dạy:</span>
+                                                <span className="font-bold text-slate-900 dark:text-white">{stats.totalCourses || 0}</span>
+                                            </div>
+                                            <div className="flex justify-between">
+                                                <span className="text-slate-600 dark:text-slate-400">Trạng thái tham gia:</span>
+                                                <span className="font-bold text-slate-900 dark:text-white">{stats.totalEnrollments || 0} enrollments</span>
                                             </div>
                                         </div>
                                     </div>

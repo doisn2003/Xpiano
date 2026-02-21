@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { X, MessageCircle, UserPlus, UserMinus, FileImage, Video, Award, Star, Loader2, User } from 'lucide-react';
-import learnService from '../../lib/learnService';
+import { X, MessageCircle, UserPlus, UserMinus, FileImage, Video, Award, Star, Loader2, User, Layers, BookOpen, Clock, Users } from 'lucide-react';
+import learnService, { Post } from '../../lib/learnService';
 import messageService from '../../lib/messageService';
 import { useNavigate } from 'react-router-dom';
+import { PostCard } from './PostCard';
+import { CourseCard } from './CourseCard';
 
 interface UserProfileModalProps {
     userId: string;
@@ -23,13 +25,32 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
     const [followLoading, setFollowLoading] = useState(false);
     const [messagingLoading, setMessagingLoading] = useState(false);
     const [selectedImage, setSelectedImage] = useState<string | null>(null);
+    const [activeTab, setActiveTab] = useState<'info' | 'courses' | 'posts'>('info');
+    const [posts, setPosts] = useState<Post[]>([]);
+    const [postsLoading, setPostsLoading] = useState(false);
     const navigate = useNavigate();
 
     useEffect(() => {
         if (isOpen && userId) {
             loadProfile();
+            loadPosts();
+            setActiveTab('info');
         }
     }, [isOpen, userId]);
+
+    const loadPosts = async () => {
+        setPostsLoading(true);
+        try {
+            const res = await learnService.getUserPosts(userId);
+            if (res.success) {
+                setPosts(res.data);
+            } else {
+                setPosts([]);
+            }
+        } finally {
+            setPostsLoading(false);
+        }
+    };
 
     const loadProfile = async () => {
         setLoading(true);
@@ -181,9 +202,42 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
                                 </div>
                             )}
 
-                            {/* Teacher Extra Info */}
-                            {profile.isTeacher && (
-                                <div className="space-y-6">
+                            {/* Navigation Tabs */}
+                            <div className="flex border-b border-slate-200 dark:border-slate-700 mt-6 gap-6">
+                                <button
+                                    onClick={() => setActiveTab('info')}
+                                    className={`pb-3 font-semibold text-sm transition-colors border-b-2 ${activeTab === 'info'
+                                        ? 'border-primary text-primary'
+                                        : 'border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
+                                        }`}
+                                >
+                                    Thông tin
+                                </button>
+                                {profile.isTeacher && profile.courses && profile.courses.length > 0 && (
+                                    <button
+                                        onClick={() => setActiveTab('courses')}
+                                        className={`pb-3 font-semibold text-sm transition-colors border-b-2 ${activeTab === 'courses'
+                                            ? 'border-primary text-primary'
+                                            : 'border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
+                                            }`}
+                                    >
+                                        Khóa học ({profile.courses.length})
+                                    </button>
+                                )}
+                                <button
+                                    onClick={() => setActiveTab('posts')}
+                                    className={`pb-3 font-semibold text-sm transition-colors border-b-2 ${activeTab === 'posts'
+                                        ? 'border-primary text-primary'
+                                        : 'border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
+                                        }`}
+                                >
+                                    Bài đăng
+                                </button>
+                            </div>
+
+                            {/* Tab Content */}
+                            {activeTab === 'info' && profile.isTeacher && (
+                                <div className="space-y-6 mt-6">
                                     {profile.bio && (
                                         <div>
                                             <h4 className="text-sm font-bold text-slate-800 dark:text-white uppercase tracking-wider mb-2">Giới thiệu</h4>
@@ -237,39 +291,37 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
                                         </div>
                                     )}
 
-                                    {profile.courses && profile.courses.length > 0 && (
-                                        <div>
-                                            <h4 className="text-sm font-bold text-slate-800 dark:text-white uppercase tracking-wider flex items-center gap-2 mb-3">
-                                                <Award className="w-4 h-4 text-emerald-500" /> Các khóa học
-                                            </h4>
-                                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                                {profile.courses.map((course: any) => (
-                                                    <div key={course.id} className="group border border-slate-200 dark:border-slate-700 rounded-2xl overflow-hidden hover:shadow-lg transition-all duration-300">
-                                                        <div className="aspect-video bg-slate-100 dark:bg-slate-700 relative overflow-hidden">
-                                                            {course.thumbnail_url ? (
-                                                                <img src={course.thumbnail_url} alt={course.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-                                                            ) : (
-                                                                <div className="w-full h-full flex items-center justify-center text-slate-400">
-                                                                    <Video className="w-8 h-8 opacity-50" />
-                                                                </div>
-                                                            )}
-                                                            <div className="absolute top-2 right-2 bg-black/60 backdrop-blur-sm text-white text-xs font-bold px-2 py-1 rounded-lg">
-                                                                {course.price > 0 ? `${course.price.toLocaleString()}đ` : 'Miễn phí'}
-                                                            </div>
-                                                        </div>
-                                                        <div className="p-4 bg-white dark:bg-slate-800">
-                                                            <h5 className="font-bold text-slate-900 dark:text-white line-clamp-2 leading-tight mb-2 group-hover:text-primary transition-colors">
-                                                                {course.title}
-                                                            </h5>
-                                                            {course.level && (
-                                                                <span className="text-xs font-medium text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-700 px-2 py-1 rounded-md">
-                                                                    {course.level}
-                                                                </span>
-                                                            )}
-                                                        </div>
-                                                    </div>
-                                                ))}
-                                            </div>
+                                </div>
+                            )}
+
+                            {activeTab === 'courses' && profile.isTeacher && profile.courses && (
+                                <div className="mt-6">
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                        {profile.courses.map((course: any) => (
+                                            <CourseCard key={course.id} course={course} showTeacher={false} />
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+
+                            {activeTab === 'posts' && (
+                                <div className="space-y-4 mt-6">
+                                    {postsLoading ? (
+                                        <div className="flex justify-center py-10">
+                                            <Loader2 className="w-6 h-6 text-primary animate-spin" />
+                                        </div>
+                                    ) : posts.length > 0 ? (
+                                        posts.map(post => (
+                                            <PostCard
+                                                key={post.id}
+                                                post={post}
+                                                currentUserId={currentUserId}
+                                            />
+                                        ))
+                                    ) : (
+                                        <div className="text-center py-10 text-slate-500 bg-slate-50 dark:bg-slate-800/50 rounded-xl">
+                                            <Layers className="w-12 h-12 mx-auto text-slate-300 dark:text-slate-600 mb-3" />
+                                            Người dùng này chưa có bài đăng nào.
                                         </div>
                                     )}
                                 </div>
