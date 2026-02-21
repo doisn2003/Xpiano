@@ -40,6 +40,15 @@ export const MessagingPanel: React.FC<MessagingPanelProps> = ({ currentUserId })
         };
     }, [currentUserId]);
 
+    // Check for pending conversation from global window
+    useEffect(() => {
+        if ((window as any).__pendingConversation) {
+            const pending = (window as any).__pendingConversation;
+            delete (window as any).__pendingConversation;
+            setActiveConversation(pending);
+        }
+    }, [currentUserId]);
+
     const handleSelectConversation = (conv: Conversation) => {
         setActiveConversation(conv);
         socketService.joinConversations([conv.id]);

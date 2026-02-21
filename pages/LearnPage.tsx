@@ -28,9 +28,23 @@ export const LearnPage: React.FC = () => {
             }
         }
 
+        const handleOpenConversation = (e: any) => {
+            if (e.detail) {
+                // We'll set the active tab first
+                setActiveTab('messages');
+                // The actual conversation selection will be handled by the MessagingPanel component
+                // To do this we need to pass down a pending conversation state or use a global state manager.
+                // For simplicity, we can store it in window temporarily
+                (window as any).__pendingConversation = e.detail;
+            }
+        };
+
+        window.addEventListener('open-conversation', handleOpenConversation);
+
         return () => {
             // Disconnect when leaving the page
             socketService.disconnect();
+            window.removeEventListener('open-conversation', handleOpenConversation);
         };
     }, [user?.id]);
 

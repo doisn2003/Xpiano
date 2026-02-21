@@ -213,6 +213,33 @@ class LearnService {
         }
     }
 
+    async getTeacherPublicProfile(userId: string) {
+        try {
+            const res = await api.get(`/social/teachers/${userId}/public`);
+            return res.data;
+        } catch (error: any) {
+            return { success: false, message: error.response?.data?.message };
+        }
+    }
+
+    async getTeacherCourses(userId: string) {
+        try {
+            const res = await api.get(`/social/teachers/${userId}/courses`);
+            return res.data;
+        } catch (error: any) {
+            return { success: false, data: [], message: error.response?.data?.message };
+        }
+    }
+
+    async getUserPublicProfile(userId: string) {
+        try {
+            const res = await api.get(`/social/users/${userId}/public`);
+            return res.data;
+        } catch (error: any) {
+            return { success: false, message: error.response?.data?.message };
+        }
+    }
+
     async searchUsers(query: string): Promise<{ success: boolean; data?: any[]; message?: string }> {
         try {
             const res = await api.get('/social/users/search', { params: { q: query } });

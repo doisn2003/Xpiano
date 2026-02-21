@@ -61,12 +61,24 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
         loadMessages();
         socketService.markRead(conversation.id);
 
-        // Socket listeners
         const unsubMsg = socketService.onNewMessage((msg: SocketMessage) => {
             if (msg.conversation_id === conversation.id) {
                 setMessages((prev) => {
-                    // Avoid duplicates
+                    // Check if we already have this exact message ID
                     if (prev.some(m => m.id === msg.id)) return prev;
+
+                    // If it's our message, check if we have an optimistic pending message with same content
+                    if (msg.sender_id === currentUserId) {
+                        const optimisticIndex = prev.findIndex(m => m.id.startsWith('temp-') && m.content === msg.content);
+                        if (optimisticIndex !== -1) {
+                            // Replace the optimistic temp message with the real one from server
+                            const newMessages = [...prev];
+                            newMessages[optimisticIndex] = msg as Message;
+                            return newMessages;
+                        }
+                    }
+
+                    // Otherwise append
                     return [...prev, msg as Message];
                 });
                 scrollToBottom();
@@ -300,8 +312,8 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
                                             )}
 
                                             <div className={`relative px-3.5 py-2 rounded-2xl text-sm leading-relaxed ${isMine
-                                                    ? 'bg-gradient-to-br from-violet-500 to-purple-600 text-white rounded-br-md shadow-sm'
-                                                    : 'bg-slate-100 dark:bg-slate-700 text-slate-800 dark:text-slate-200 rounded-bl-md'
+                                                ? 'bg-gradient-to-br from-violet-500 to-purple-600 text-white rounded-br-md shadow-sm'
+                                                : 'bg-slate-100 dark:bg-slate-700 text-slate-800 dark:text-slate-200 rounded-bl-md'
                                                 }`}>
                                                 {msg.content}
 

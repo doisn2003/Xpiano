@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import learnService, { Post } from '../../lib/learnService';
 import { CommentSection } from './CommentSection';
+import { UserProfileModal } from './UserProfileModal';
 
 interface PostCardProps {
     post: Post;
@@ -47,6 +48,7 @@ export const PostCard: React.FC<PostCardProps> = ({ post, currentUserId, onDelet
     const [showComments, setShowComments] = useState(false);
     const [showMenu, setShowMenu] = useState(false);
     const [likeLoading, setLikeLoading] = useState(false);
+    const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
 
     const isOwner = currentUserId === post.user_id;
 
@@ -91,18 +93,24 @@ export const PostCard: React.FC<PostCardProps> = ({ post, currentUserId, onDelet
             {/* Header */}
             <div className="flex items-start justify-between p-5 pb-3">
                 <div className="flex items-center gap-3">
-                    <div className="w-11 h-11 rounded-full bg-gradient-to-br from-primary to-cyan-600 flex items-center justify-center text-white font-bold text-sm overflow-hidden shadow-md flex-shrink-0">
+                    <button
+                        onClick={() => setSelectedUserId(post.author?.id || null)}
+                        className="w-11 h-11 rounded-full bg-gradient-to-br from-primary to-cyan-600 flex items-center justify-center text-white font-bold text-sm overflow-hidden shadow-md flex-shrink-0 hover:opacity-90 transition-opacity"
+                    >
                         {post.author?.avatar_url ? (
                             <img src={post.author.avatar_url} alt={post.author.full_name} className="w-full h-full object-cover" />
                         ) : (
                             <User className="w-5 h-5" />
                         )}
-                    </div>
+                    </button>
                     <div>
                         <div className="flex items-center gap-2">
-                            <h3 className="font-semibold text-slate-800 dark:text-white text-sm">
+                            <button
+                                onClick={() => setSelectedUserId(post.author?.id || null)}
+                                className="font-semibold text-slate-800 dark:text-white text-sm hover:text-primary transition-colors text-left"
+                            >
                                 {post.author?.full_name || 'Người dùng'}
-                            </h3>
+                            </button>
                             {post.author?.role === 'teacher' && (
                                 <span className="text-[10px] bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300 px-1.5 py-0.5 rounded-full font-medium">
                                     🎹 GV
@@ -185,8 +193,8 @@ export const PostCard: React.FC<PostCardProps> = ({ post, currentUserId, onDelet
                 <button
                     onClick={handleLike}
                     className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium transition-all active:scale-95 ${liked
-                            ? 'text-red-500 bg-red-50 dark:bg-red-900/20 hover:bg-red-100 dark:hover:bg-red-900/30'
-                            : 'text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700/50 hover:text-red-500'
+                        ? 'text-red-500 bg-red-50 dark:bg-red-900/20 hover:bg-red-100 dark:hover:bg-red-900/30'
+                        : 'text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700/50 hover:text-red-500'
                         }`}
                 >
                     <Heart className={`w-[18px] h-[18px] transition-all ${liked ? 'fill-current scale-110' : ''}`} />
@@ -196,8 +204,8 @@ export const PostCard: React.FC<PostCardProps> = ({ post, currentUserId, onDelet
                 <button
                     onClick={() => setShowComments(!showComments)}
                     className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium transition-all active:scale-95 ${showComments
-                            ? 'text-primary bg-primary/10 dark:bg-primary/20'
-                            : 'text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700/50 hover:text-primary'
+                        ? 'text-primary bg-primary/10 dark:bg-primary/20'
+                        : 'text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700/50 hover:text-primary'
                         }`}
                 >
                     <MessageCircle className="w-[18px] h-[18px]" />
@@ -214,6 +222,15 @@ export const PostCard: React.FC<PostCardProps> = ({ post, currentUserId, onDelet
                     isOpen={showComments}
                 />
             </div>
+
+            {selectedUserId && (
+                <UserProfileModal
+                    userId={selectedUserId}
+                    currentUserId={currentUserId}
+                    isOpen={!!selectedUserId}
+                    onClose={() => setSelectedUserId(null)}
+                />
+            )}
         </article>
     );
 };

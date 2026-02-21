@@ -53,13 +53,17 @@ export const ConversationList: React.FC<ConversationListProps> = ({
         }
     };
 
-    const filtered = conversations.filter((c) => {
-        if (!search.trim()) return true;
-        const name = c.type === 'direct'
-            ? c.other_user?.full_name || ''
-            : c.name || '';
-        return name.toLowerCase().includes(search.toLowerCase());
-    });
+    const filtered = React.useMemo(() => {
+        if (!search.trim()) return conversations;
+        const lowerSearch = search.toLowerCase();
+        return conversations.filter((c) => {
+            const name = c.type === 'direct'
+                ? c.other_user?.full_name || ''
+                : c.name || '';
+            const preview = c.last_message_preview || '';
+            return name.toLowerCase().includes(lowerSearch) || preview.toLowerCase().includes(lowerSearch);
+        });
+    }, [conversations, search]);
 
     return (
         <div className="flex flex-col h-full bg-white dark:bg-slate-800 border-r border-slate-200 dark:border-slate-700">
@@ -126,14 +130,14 @@ export const ConversationList: React.FC<ConversationListProps> = ({
                                 key={conv.id}
                                 onClick={() => onSelectConversation(conv)}
                                 className={`w-full flex items-center gap-3 px-4 py-3.5 text-left transition-all ${isActive
-                                        ? 'bg-violet-50 dark:bg-violet-900/20 border-l-3 border-l-violet-500'
-                                        : 'hover:bg-slate-50 dark:hover:bg-slate-700/50'
+                                    ? 'bg-violet-50 dark:bg-violet-900/20 border-l-3 border-l-violet-500'
+                                    : 'hover:bg-slate-50 dark:hover:bg-slate-700/50'
                                     }`}
                             >
                                 {/* Avatar */}
                                 <div className={`w-11 h-11 rounded-full flex items-center justify-center text-white font-bold text-sm overflow-hidden flex-shrink-0 shadow-sm ${conv.type === 'group'
-                                        ? 'bg-gradient-to-br from-amber-500 to-orange-500'
-                                        : 'bg-gradient-to-br from-violet-500 to-purple-600'
+                                    ? 'bg-gradient-to-br from-amber-500 to-orange-500'
+                                    : 'bg-gradient-to-br from-violet-500 to-purple-600'
                                     }`}>
                                     {avatarUrl ? (
                                         <img src={avatarUrl} alt="" className="w-full h-full object-cover" />
@@ -148,8 +152,8 @@ export const ConversationList: React.FC<ConversationListProps> = ({
                                 <div className="flex-1 min-w-0">
                                     <div className="flex items-center justify-between">
                                         <p className={`text-sm truncate ${conv.has_unread
-                                                ? 'font-bold text-slate-800 dark:text-white'
-                                                : 'font-medium text-slate-700 dark:text-slate-300'
+                                            ? 'font-bold text-slate-800 dark:text-white'
+                                            : 'font-medium text-slate-700 dark:text-slate-300'
                                             }`}>
                                             {displayName}
                                         </p>
@@ -159,8 +163,8 @@ export const ConversationList: React.FC<ConversationListProps> = ({
                                     </div>
                                     <div className="flex items-center mt-0.5">
                                         <p className={`text-xs truncate flex-1 ${conv.has_unread
-                                                ? 'text-slate-600 dark:text-slate-300 font-medium'
-                                                : 'text-slate-400 dark:text-slate-500'
+                                            ? 'text-slate-600 dark:text-slate-300 font-medium'
+                                            : 'text-slate-400 dark:text-slate-500'
                                             }`}>
                                             {conv.last_message_preview || 'Tin nhắn mới'}
                                         </p>

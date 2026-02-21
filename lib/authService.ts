@@ -263,9 +263,7 @@ class AuthService {
             }
             return null;
         } catch (error) {
-            console.error('Error getting profile:', error);
-            // If 401, clear session
-            this.logout();
+            console.error('Network or 500 error getting profile. Deferring to api interceptor for auth logic.', error);
             return null;
         }
     }
@@ -314,7 +312,7 @@ class AuthService {
             }
 
             const response = await api.post('/auth/refresh', { refresh_token: refreshToken });
-            
+
             if (response.data.success) {
                 const { token, refresh_token, expires_at } = response.data.data;
                 localStorage.setItem('token', token);

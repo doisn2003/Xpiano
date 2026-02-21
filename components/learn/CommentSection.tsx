@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Send, Loader2 } from 'lucide-react';
 import learnService, { Comment } from '../../lib/learnService';
 import { UserProfileCard } from './UserProfileCard';
+import { UserProfileModal } from './UserProfileModal';
 
 interface CommentSectionProps {
     postId: string;
@@ -22,6 +23,7 @@ export const CommentSection: React.FC<CommentSectionProps> = ({
     const [sending, setSending] = useState(false);
     const [cursor, setCursor] = useState<string | null>(null);
     const [hasMore, setHasMore] = useState(false);
+    const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
 
     useEffect(() => {
         if (isOpen && comments.length === 0) {
@@ -84,16 +86,6 @@ export const CommentSection: React.FC<CommentSectionProps> = ({
 
             {/* Comments List */}
             <div className="space-y-3 max-h-80 overflow-y-auto no-scrollbar">
-                {comments.map((comment) => (
-                    <div key={comment.id} className="flex gap-3 group">
-                        <div className="flex-shrink-0 mt-0.5">
-                            {comment.author && (
-                                <UserProfileCard user={comment.author} currentUserId={currentUserId} compact />
-                            )}
-                        </div>
-                    </div>
-                ))}
-
                 {comments.length === 0 && !loading && (
                     <div className="text-center text-sm text-slate-400 dark:text-slate-500 py-4">
                         Chưa có bình luận nào. Hãy là người đầu tiên!
@@ -102,8 +94,37 @@ export const CommentSection: React.FC<CommentSectionProps> = ({
 
                 {/* Redesign comments to be simpler - not nested UserProfileCard */}
                 {comments.length > 0 && (
-                    <div className="space-y-3">
-                        {/* Rerender as simple comment rows */}
+                    <div className="space-y-4">
+                        {comments.map((comment) => (
+                            <div key={comment.id} className="flex gap-3">
+                                <button
+                                    onClick={() => setSelectedUserId(comment.author?.id || null)}
+                                    className="w-8 h-8 rounded-full bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center text-white font-bold text-xs overflow-hidden flex-shrink-0 hover:opacity-90 transition-opacity"
+                                >
+                                    {comment.author?.avatar_url ? (
+                                        <img src={comment.author.avatar_url} className="w-full h-full object-cover" alt="" />
+                                    ) : (
+                                        <span>{comment.author?.full_name?.charAt(0) || 'U'}</span>
+                                    )}
+                                </button>
+                                <div className="flex-1 min-w-0 bg-slate-100 dark:bg-slate-700/50 rounded-2xl rounded-tl-sm px-4 py-2.5">
+                                    <div className="flex items-center gap-2 mb-1">
+                                        <button
+                                            onClick={() => setSelectedUserId(comment.author?.id || null)}
+                                            className="font-semibold text-sm text-slate-900 dark:text-white hover:text-primary transition-colors text-left"
+                                        >
+                                            {comment.author?.full_name || 'Người dùng'}
+                                        </button>
+                                        {comment.author?.role === 'teacher' && (
+                                            <span className="text-[10px] bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300 px-1.5 py-0.5 rounded-full font-medium">
+                                                🎹 GV
+                                            </span>
+                                        )}
+                                    </div>
+                                    <p className="text-sm text-slate-700 dark:text-slate-300 whitespace-pre-wrap">{comment.content}</p>
+                                </div>
+                            </div>
+                        ))}
                     </div>
                 )}
 
@@ -122,6 +143,14 @@ export const CommentSection: React.FC<CommentSectionProps> = ({
                     </button>
                 )}
             </div>
+            {selectedUserId && (
+                <UserProfileModal
+                    userId={selectedUserId}
+                    currentUserId={currentUserId}
+                    isOpen={!!selectedUserId}
+                    onClose={() => setSelectedUserId(null)}
+                />
+            )}
         </div>
     );
 };
