@@ -29,6 +29,8 @@ export interface LiveSession {
     created_at: string;
     teacher?: SessionTeacher;
     current_participants?: number;
+    course?: Course;
+    is_enrolled?: boolean;
 }
 
 export interface SessionParticipant {
@@ -170,6 +172,7 @@ class SessionService {
         teacher_id?: string;
         cursor?: string;
         limit?: number;
+        my_schedule?: boolean;
     } = {}) {
         try {
             const res = await api.get('/sessions', { params });

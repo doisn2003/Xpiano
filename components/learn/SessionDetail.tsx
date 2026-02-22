@@ -1,9 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import {
     ArrowLeft, Calendar, Clock, Users, User, Play, Radio,
-    Loader2, MapPin, CheckCircle, XCircle, BarChart3, Trash2
+    Loader2, MapPin, CheckCircle, XCircle, BarChart3, Trash2,
+    ShoppingCart, Lock
 } from 'lucide-react';
 import sessionService, { LiveSession, SessionParticipant, SessionAnalytics } from '../../lib/sessionService';
+import { CourseCard } from './CourseCard';
+import PaymentModal from '../PaymentModal';
 
 interface SessionDetailProps {
     sessionId: string;
@@ -20,6 +23,7 @@ export const SessionDetail: React.FC<SessionDetailProps> = ({ sessionId, current
     const [loading, setLoading] = useState(true);
     const [actionLoading, setActionLoading] = useState(false);
     const [error, setError] = useState('');
+    const [showPaymentModal, setShowPaymentModal] = useState(false);
 
     const isOwner = session?.teacher_id === currentUserId;
     const isTeacher = userRole === 'teacher' || userRole === 'admin';
@@ -124,9 +128,9 @@ export const SessionDetail: React.FC<SessionDetailProps> = ({ sessionId, current
             <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 overflow-hidden shadow-sm">
                 {/* Status Banner */}
                 <div className={`px-6 py-3 text-sm font-semibold flex items-center gap-2 ${session.status === 'live' ? 'bg-green-500 text-white' :
-                        session.status === 'scheduled' ? 'bg-gradient-to-r from-amber-500 to-orange-500 text-white' :
-                            session.status === 'ended' ? 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300' :
-                                'bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-300'
+                    session.status === 'scheduled' ? 'bg-gradient-to-r from-amber-500 to-orange-500 text-white' :
+                        session.status === 'ended' ? 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300' :
+                            'bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-300'
                     }`}>
                     {session.status === 'live' && <><Radio className="w-4 h-4 animate-pulse" /> Đang diễn ra</>}
                     {session.status === 'scheduled' && <><Calendar className="w-4 h-4" /> Sắp diễn ra</>}
@@ -169,35 +173,64 @@ export const SessionDetail: React.FC<SessionDetailProps> = ({ sessionId, current
 
                     {/* Actions */}
                     <div className="flex gap-3">
-                        {session.status === 'live' && (
-                            <button
-                                onClick={handleJoin}
-                                disabled={actionLoading}
-                                className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-green-500 to-emerald-500 text-white rounded-xl font-semibold text-sm hover:shadow-lg hover:shadow-green-500/25 transition-all disabled:opacity-50"
-                            >
-                                {actionLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Play className="w-4 h-4" />}
-                                {isOwner ? 'Vào phòng dạy' : 'Tham gia học'}
-                            </button>
-                        )}
-
-                        {session.status === 'scheduled' && isOwner && (
+                        {(!isTeacher && session.course && session.is_enrolled === false) ? (
+                            <div className="w-full mt-4">
+                                <div className="bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-800 rounded-xl p-4 mb-6 flex items-start gap-3">
+                                    <Lock className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
+                                    <div>
+                                        <h4 className="font-semibold text-amber-800 dark:text-amber-400 mb-1">Khóa học yêu cầu đăng ký</h4>
+                                        <p className="text-sm text-amber-700/80 dark:text-amber-500/80">
+                                            Buổi học này thuộc về một khóa học cao cấp. Bạn cần đăng ký khóa học bên dưới để có thể tham gia vào lớp học trực tuyến.
+                                        </p>
+                                    </div>
+                                </div>
+                                <CourseCard
+                                    course={session.course}
+                                    showTeacher={false}
+                                    action={
+                                        <button
+                                            onClick={() => setShowPaymentModal(true)}
+                                            className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-amber-500 hover:bg-amber-600 text-white rounded-xl font-semibold transition-colors"
+                                        >
+                                            <ShoppingCart className="w-4 h-4" />
+                                            Đăng ký ngay
+                                        </button>
+                                    }
+                                />
+                            </div>
+                        ) : (
                             <>
-                                <button
-                                    onClick={handleStart}
-                                    disabled={actionLoading}
-                                    className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-xl font-semibold text-sm hover:shadow-lg transition-all disabled:opacity-50"
-                                >
-                                    {actionLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Play className="w-4 h-4" />}
-                                    Bắt đầu buổi học
-                                </button>
-                                <button
-                                    onClick={handleCancel}
-                                    disabled={actionLoading}
-                                    className="flex items-center gap-2 px-4 py-3 border border-red-200 dark:border-red-800 text-red-500 rounded-xl text-sm font-medium hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
-                                >
-                                    <Trash2 className="w-4 h-4" />
-                                    Hủy
-                                </button>
+                                {session.status === 'live' && (
+                                    <button
+                                        onClick={handleJoin}
+                                        disabled={actionLoading}
+                                        className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-green-500 to-emerald-500 text-white rounded-xl font-semibold text-sm hover:shadow-lg hover:shadow-green-500/25 transition-all disabled:opacity-50"
+                                    >
+                                        {actionLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Play className="w-4 h-4" />}
+                                        {isOwner ? 'Vào phòng dạy' : 'Tham gia học'}
+                                    </button>
+                                )}
+
+                                {session.status === 'scheduled' && isOwner && (
+                                    <>
+                                        <button
+                                            onClick={handleStart}
+                                            disabled={actionLoading}
+                                            className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-xl font-semibold text-sm hover:shadow-lg transition-all disabled:opacity-50"
+                                        >
+                                            {actionLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Play className="w-4 h-4" />}
+                                            Bắt đầu buổi học
+                                        </button>
+                                        <button
+                                            onClick={handleCancel}
+                                            disabled={actionLoading}
+                                            className="flex items-center gap-2 px-4 py-3 border border-red-200 dark:border-red-800 text-red-500 rounded-xl text-sm font-medium hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+                                        >
+                                            <Trash2 className="w-4 h-4" />
+                                            Hủy
+                                        </button>
+                                    </>
+                                )}
                             </>
                         )}
                     </div>
@@ -254,6 +287,24 @@ export const SessionDetail: React.FC<SessionDetailProps> = ({ sessionId, current
                         </div>
                     </div>
                 </div>
+            )}
+
+            {/* Payment Modal for unenrolled users */}
+            {showPaymentModal && session.course && (
+                <PaymentModal
+                    isOpen={showPaymentModal}
+                    onClose={() => setShowPaymentModal(false)}
+                    orderType="course"
+                    courseId={session.course.id}
+                    courseName={session.course.title}
+                    totalPrice={session.course.price}
+                    paymentMethodOnly='QR'
+                    onSuccess={() => {
+                        alert('Đăng ký khóa học thành công!');
+                        setShowPaymentModal(false);
+                        loadSession(); // reload specifically to update is_enrolled flag
+                    }}
+                />
             )}
 
             <div className="h-20 lg:h-0" />

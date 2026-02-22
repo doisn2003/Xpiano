@@ -19,6 +19,7 @@ interface PaymentModalProps {
     pendingOrder?: OrderResponse | null;
     onOrderCreated?: (order: OrderResponse) => void;
     onOrderCleared?: () => void; // Called when pending order expires or user resets
+    paymentMethodOnly?: 'QR' | 'COD';
 }
 
 type PaymentStep = 'select' | 'qr' | 'success' | 'expired' | 'cancelled';
@@ -37,10 +38,11 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
     onSuccess,
     pendingOrder,
     onOrderCreated,
-    onOrderCleared
+    onOrderCleared,
+    paymentMethodOnly
 }) => {
     const [step, setStep] = useState<PaymentStep>('select');
-    const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('COD');
+    const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>(paymentMethodOnly || 'COD');
     const [loading, setLoading] = useState(false);
     const [cancelling, setCancelling] = useState(false);
     const [authError, setAuthError] = useState(false); // Track auth issues
@@ -64,7 +66,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
             }
             // Default: start fresh
             setStep('select');
-            setPaymentMethod('COD');
+            setPaymentMethod(paymentMethodOnly || 'COD');
             setLoading(false);
             setCancelling(false);
             setAuthError(false);
@@ -251,51 +253,55 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
 
                             {/* Payment Options */}
                             <div className="space-y-3 mb-6">
-                                <button
-                                    onClick={() => setPaymentMethod('COD')}
-                                    className={`w-full p-4 rounded-xl border-2 transition-all flex items-center gap-4 ${paymentMethod === 'COD'
+                                {(!paymentMethodOnly || paymentMethodOnly === 'COD') && (
+                                    <button
+                                        onClick={() => setPaymentMethod('COD')}
+                                        className={`w-full p-4 rounded-xl border-2 transition-all flex items-center gap-4 ${paymentMethod === 'COD'
                                             ? 'border-primary bg-primary/5'
                                             : 'border-slate-200 dark:border-slate-600 hover:border-slate-300'
-                                        }`}
-                                >
-                                    <div className={`p-3 rounded-full ${paymentMethod === 'COD' ? 'bg-primary/10' : 'bg-slate-100 dark:bg-slate-700'}`}>
-                                        <Banknote className={`w-6 h-6 ${paymentMethod === 'COD' ? 'text-primary' : 'text-slate-500'}`} />
-                                    </div>
-                                    <div className="text-left flex-1">
-                                        <p className={`font-semibold ${paymentMethod === 'COD' ? 'text-primary' : 'text-slate-900 dark:text-white'}`}>
-                                            Thanh toán khi nhận hàng (COD)
-                                        </p>
-                                        <p className="text-sm text-slate-500 dark:text-slate-400">
-                                            Nhân viên sẽ liên hệ xác nhận đơn hàng
-                                        </p>
-                                    </div>
-                                    {paymentMethod === 'COD' && (
-                                        <CheckCircle className="w-6 h-6 text-primary" />
-                                    )}
-                                </button>
+                                            }`}
+                                    >
+                                        <div className={`p-3 rounded-full ${paymentMethod === 'COD' ? 'bg-primary/10' : 'bg-slate-100 dark:bg-slate-700'}`}>
+                                            <Banknote className={`w-6 h-6 ${paymentMethod === 'COD' ? 'text-primary' : 'text-slate-500'}`} />
+                                        </div>
+                                        <div className="text-left flex-1">
+                                            <p className={`font-semibold ${paymentMethod === 'COD' ? 'text-primary' : 'text-slate-900 dark:text-white'}`}>
+                                                Thanh toán khi nhận hàng (COD)
+                                            </p>
+                                            <p className="text-sm text-slate-500 dark:text-slate-400">
+                                                Nhân viên sẽ liên hệ xác nhận đơn hàng
+                                            </p>
+                                        </div>
+                                        {paymentMethod === 'COD' && (
+                                            <CheckCircle className="w-6 h-6 text-primary" />
+                                        )}
+                                    </button>
+                                )}
 
-                                <button
-                                    onClick={() => setPaymentMethod('QR')}
-                                    className={`w-full p-4 rounded-xl border-2 transition-all flex items-center gap-4 ${paymentMethod === 'QR'
+                                {(!paymentMethodOnly || paymentMethodOnly === 'QR') && (
+                                    <button
+                                        onClick={() => setPaymentMethod('QR')}
+                                        className={`w-full p-4 rounded-xl border-2 transition-all flex items-center gap-4 ${paymentMethod === 'QR'
                                             ? 'border-primary bg-primary/5'
                                             : 'border-slate-200 dark:border-slate-600 hover:border-slate-300'
-                                        }`}
-                                >
-                                    <div className={`p-3 rounded-full ${paymentMethod === 'QR' ? 'bg-primary/10' : 'bg-slate-100 dark:bg-slate-700'}`}>
-                                        <QrCode className={`w-6 h-6 ${paymentMethod === 'QR' ? 'text-primary' : 'text-slate-500'}`} />
-                                    </div>
-                                    <div className="text-left flex-1">
-                                        <p className={`font-semibold ${paymentMethod === 'QR' ? 'text-primary' : 'text-slate-900 dark:text-white'}`}>
-                                            Chuyển khoản (VietQR)
-                                        </p>
-                                        <p className="text-sm text-slate-500 dark:text-slate-400">
-                                            Quét mã QR để thanh toán ngay
-                                        </p>
-                                    </div>
-                                    {paymentMethod === 'QR' && (
-                                        <CheckCircle className="w-6 h-6 text-primary" />
-                                    )}
-                                </button>
+                                            }`}
+                                    >
+                                        <div className={`p-3 rounded-full ${paymentMethod === 'QR' ? 'bg-primary/10' : 'bg-slate-100 dark:bg-slate-700'}`}>
+                                            <QrCode className={`w-6 h-6 ${paymentMethod === 'QR' ? 'text-primary' : 'text-slate-500'}`} />
+                                        </div>
+                                        <div className="text-left flex-1">
+                                            <p className={`font-semibold ${paymentMethod === 'QR' ? 'text-primary' : 'text-slate-900 dark:text-white'}`}>
+                                                Chuyển khoản (VietQR)
+                                            </p>
+                                            <p className="text-sm text-slate-500 dark:text-slate-400">
+                                                Quét mã QR để thanh toán ngay
+                                            </p>
+                                        </div>
+                                        {paymentMethod === 'QR' && (
+                                            <CheckCircle className="w-6 h-6 text-primary" />
+                                        )}
+                                    </button>
+                                )}
                             </div>
 
                             <GoldButton

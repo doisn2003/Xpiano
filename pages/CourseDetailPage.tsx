@@ -223,6 +223,7 @@ export const CourseDetailPage: React.FC = () => {
                     courseId={course.id}
                     courseName={course.title}
                     totalPrice={course.price}
+                    paymentMethodOnly='QR'
                     onSuccess={() => {
                         alert('Đăng ký khóa học thành công!');
                         setShowPaymentModal(false);

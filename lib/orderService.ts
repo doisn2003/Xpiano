@@ -51,12 +51,13 @@ export interface OrderWithDetails extends Order {
 }
 
 export interface CreateOrderData {
-    piano_id: number;
-    type: 'buy' | 'rent';
+    piano_id?: number;
+    course_id?: string;
+    type: 'buy' | 'rent' | 'course';
     rental_start_date?: string;
     rental_end_date?: string;
     payment_method?: PaymentMethod;
-    // Affiliate tracking (tự động đính kèm nếu có mã giới thiệu còn hạn trong localStorage)
+    // Affiliate tracking
     affiliate_ref?: string;
 }
 

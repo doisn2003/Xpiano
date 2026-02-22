@@ -18,9 +18,10 @@ interface ClassroomHubProps {
     onJoinLive?: (sessionId: string) => void;
 }
 
-type StatusFilter = 'all' | 'scheduled' | 'live' | 'ended';
+type StatusFilter = 'all' | 'my_schedule' | 'scheduled' | 'live' | 'ended';
 
 const STATUS_BADGES: Record<string, { label: string; color: string; icon: React.ReactNode }> = {
+    my_schedule: { label: 'Lịch của tôi', color: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300', icon: <Calendar className="w-3 h-3" /> },
     scheduled: { label: 'Sắp diễn ra', color: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300', icon: <Calendar className="w-3 h-3" /> },
     live: { label: 'Đang live', color: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300', icon: <Radio className="w-3 h-3" /> },
     ended: { label: 'Đã kết thúc', color: 'bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-300', icon: <CheckCircle className="w-3 h-3" /> },
@@ -50,7 +51,14 @@ export const ClassroomHub: React.FC<ClassroomHubProps> = ({ currentUserId, userR
         setLoading(true);
         try {
             const params: any = { limit: 20 };
-            if (filter !== 'all') params.status = filter;
+            if (filter !== 'all' && filter !== 'my_schedule') params.status = filter;
+            if (filter === 'my_schedule') {
+                if (isTeacher && currentUserId) {
+                    params.teacher_id = currentUserId;
+                } else {
+                    params.my_schedule = true;
+                }
+            }
             if (!reset && cursor) params.cursor = cursor;
 
             const res = await sessionService.getSessions(params);
@@ -315,8 +323,8 @@ export const ClassroomHub: React.FC<ClassroomHubProps> = ({ currentUserId, userR
             {activeTab === 'schedule' && (
                 <>
                     {/* Status Filters */}
-                    <div className="flex gap-2 mb-6 overflow-x-auto pb-2">
-                        {(['all', 'live', 'scheduled', 'ended'] as StatusFilter[]).map(f => (
+                    <div className="flex gap-2 mb-6 overflow-x-auto pb-2 scrollbar-hide">
+                        {(['all', 'my_schedule', 'live', 'scheduled', 'ended'] as StatusFilter[]).map(f => (
                             <button
                                 key={f}
                                 onClick={() => setFilter(f)}
@@ -326,8 +334,9 @@ export const ClassroomHub: React.FC<ClassroomHubProps> = ({ currentUserId, userR
                                     }`}
                             >
                                 {f === 'all' && <Filter className="w-3.5 h-3.5" />}
+                                {f === 'my_schedule' && <Calendar className="w-3.5 h-3.5" />}
                                 {f === 'live' && <Radio className="w-3.5 h-3.5" />}
-                                {f === 'scheduled' && <Calendar className="w-3.5 h-3.5" />}
+                                {f === 'scheduled' && <Clock className="w-3.5 h-3.5" />}
                                 {f === 'ended' && <CheckCircle className="w-3.5 h-3.5" />}
                                 {f === 'all' ? 'Tất cả' : STATUS_BADGES[f]?.label}
                             </button>
@@ -349,7 +358,13 @@ export const ClassroomHub: React.FC<ClassroomHubProps> = ({ currentUserId, userR
                                 Chưa có buổi học nào
                             </h3>
                             <p className="text-sm text-slate-500 dark:text-slate-400">
-                                {isTeacher ? 'Bấm \"Tạo buổi học\" để bắt đầu!' : 'Các buổi học sẽ hiển thị ở đây khi giáo viên tạo.'}
+                                {filter === 'my_schedule'
+                                    ? isTeacher
+                                        ? 'Bạn chưa tạo buổi học nào cho lịch của mình.'
+                                        : 'Bạn chưa đăng ký khóa học nào hoặc các khóa học bạn tham gia chưa có lịch học.'
+                                    : isTeacher
+                                        ? 'Bấm "Tạo buổi học" để bắt đầu!'
+                                        : 'Các buổi học sẽ hiển thị ở đây khi giáo viên tạo.'}
                             </p>
                         </div>
                     ) : (
@@ -383,23 +398,24 @@ export const ClassroomHub: React.FC<ClassroomHubProps> = ({ currentUserId, userR
                             onCreated={handleSessionCreated}
                         />
                     )}
-
-                    {showPaymentModal && selectedCourse && (
-                        <PaymentModal
-                            isOpen={showPaymentModal}
-                            onClose={() => setShowPaymentModal(false)}
-                            orderType="course"
-                            courseId={selectedCourse.id}
-                            courseName={selectedCourse.title}
-                            totalPrice={selectedCourse.price}
-                            onSuccess={() => {
-                                alert('Đăng ký khóa học thành công!');
-                                // Might want to switch to 'my courses' or scheduling section
-                                setShowPaymentModal(false);
-                            }}
-                        />
-                    )}
                 </>
+            )}
+            {/* Payment Modal moved outside of activeTab schedule */}
+            {showPaymentModal && selectedCourse && (
+                <PaymentModal
+                    isOpen={showPaymentModal}
+                    onClose={() => setShowPaymentModal(false)}
+                    orderType="course"
+                    courseId={selectedCourse.id}
+                    courseName={selectedCourse.title}
+                    totalPrice={selectedCourse.price}
+                    // Requesting to only show QR
+                    paymentMethodOnly='QR'
+                    onSuccess={() => {
+                        alert('Đăng ký khóa học thành công!');
+                        setShowPaymentModal(false);
+                    }}
+                />
             )}
 
             <div className="h-20 lg:h-0" />
